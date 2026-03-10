@@ -1,0 +1,42 @@
+[
+    {
+        "name": "Work Tracker",
+        "description": "Track project tasks and work progress.",
+        "status": "active"
+    },
+    {
+        "name": "CLI Portfolio",
+        "description": "A showcase of terminal-based tools.",
+        "status": "active"
+    },
+    {
+        "name": "Work Tracker v2",
+        "description": "Track project tasks with refactored persistence.",
+        "status": "active"
+    },
+    {
+        "name": "Interface Design",
+        "description": "Building a flexible storage abstraction.",
+        "status": "active"
+    },
+    {
+        "name": "Modular Work Tracker",
+        "description": "Refactored into multiple files for better organization.",
+        "status": "active"
+    },
+    {
+        "name": "File Structure Update",
+        "description": "Separated concerns into models, storage, and manager.",
+        "status": "active"
+    },
+    {
+        "name": "Work Tracker",
+        "description": "Track project tasks and work progress.",
+        "status": "active"
+    },
+    {
+        "name": "samta",
+        "description": "",
+        "status": "active"
+    }
+]
