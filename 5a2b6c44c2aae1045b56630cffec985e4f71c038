@@ -1,0 +1,106 @@
+src/ui/activity_list_presenter.py
+  24f8ab0a14de376a 1-17,19-24,26-53,57-70,99-143,157-164
+  d29337aafcd8bddc 18,25,54-56,71-98,144-156,165-171
+test_interceptor.py
+  24f8ab0a14de376a 1-35
+src/ui/presenter.py
+  24f8ab0a14de376a 4-10
+gui_main.py
+  d29337aafcd8bddc 4,19,38-40,93,104-107,109-126,128-134
+  24f8ab0a14de376a 11-12,17-18,20-22,26-32,36-37,50-52,69-73,76-77,127,135,141,152-153,159-167
+test_interceptor_auto.py
+  24f8ab0a14de376a 1-31
+src/ui/views/home_view.py
+  24f8ab0a14de376a 1-16,18-27,29,31-85,88-89,91-97,99-103,106-126,128-148,152,156,158-167,169-235,241-242,244-245,248-249,251,253-281
+data/credentials.json
+  24f8ab0a14de376a 1-4
+src/ui/home_presenter.py
+  24f8ab0a14de376a 1-67,69-110,112-121,123-127
+src/api.py
+  24f8ab0a14de376a 1-16,19,21-45,47-69,71-73,75-77,79-81,83-85,87-107
+  a895600a7104f54d 17-18,20,46,70,74,78,82,86
+src/services/auth_service.py
+  a895600a7104f54d 16,19,37,57,61,119,136,148,153,159
+  24f8ab0a14de376a 1-15,17-18,20-36,38-56,58-60,62-118,120-135,137-147,149-152,154-158,160-163
+src/ui/views/activity_list_view.py
+  24f8ab0a14de376a 1-369
+src/ui/views/main_container.py
+  24f8ab0a14de376a 8-9,34-35,37-41,54-61
+src/ui/views/smart_log_dialog.py
+  d29337aafcd8bddc 1,8,26-33,36-37,69-80,83,86-99,119,133-139,143-144,146-154,156-163,167,169-175,177
+  24f8ab0a14de376a 2,4,14-23,25,35,42,48-50,54,57-58,60-65,67,84-85,101-105,121-124,126,141,165,168,176
+src/ui/settings_presenter.py
+  a895600a7104f54d 7-8,10,23,32,41,58
+  24f8ab0a14de376a 1-6,9,11-22,24-31,33-40,42-57,59-67
+src/services/project_manager.py
+  a895600a7104f54d 13-14,16,22,27,34
+  24f8ab0a14de376a 6-11
+src/ui/views/project_card_view.py
+  24f8ab0a14de376a 1-20,23-29,31-52,55-57,62,64-65,70,76-78,80-120
+src/persistence/credential_storage.py
+  a895600a7104f54d 6-7,9,13,26,41
+  24f8ab0a14de376a 1-5,8,10-12,14-25,27-40,42-48
+tests/test_activity_list_presenter.py
+  24f8ab0a14de376a 1-14,16-130,158-161
+  d29337aafcd8bddc 15,131-157
+src/ui/views/sidebar_view.py
+  24f8ab0a14de376a 50-51,56,58,90-92,94-99
+src/services/activity_service.py
+  d29337aafcd8bddc 75-96
+  24f8ab0a14de376a 1-13,15-16,18-21,23-74
+  a895600a7104f54d 14,17,22
+src/services/project_service.py
+  24f8ab0a14de376a 1-13,15-16,18-28,30-86
+  a895600a7104f54d 14,17,29
+  d29337aafcd8bddc 87-110
+src/ui/views/settings_view.py
+  24f8ab0a14de376a 1-152
+requirements.txt
+  24f8ab0a14de376a 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "5a2b6c44c2aae1045b56630cffec985e4f71c038",
+  "prompts": {
+    "24f8ab0a14de376a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d2474-48c3-78a2-9d9c-53c830c6bf4d",
+        "model": "unknown"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 2111,
+      "total_deletions": 214,
+      "accepted_lines": 1968,
+      "overriden_lines": 0
+    },
+    "a895600a7104f54d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d2473-9a93-7222-8253-7f37016e862b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 131,
+      "accepted_lines": 44,
+      "overriden_lines": 0
+    },
+    "d29337aafcd8bddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d249c-8de7-7fe1-8019-fdd9ec2e45d6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 270,
+      "total_deletions": 44,
+      "accepted_lines": 240,
+      "overriden_lines": 0
+    }
+  }
+}
