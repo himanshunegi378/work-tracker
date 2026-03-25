@@ -52,6 +52,7 @@ class TimesheetService:
         self.getdoc_endpoint = "/api/method/frappe.desk.form.load.getdoc"
         self.save_endpoint = "/api/method/frappe.desk.form.save.savedocs"
 
+    # Public service API
     def get_timesheets(
         self,
         start: int = 0,
@@ -257,6 +258,7 @@ class TimesheetService:
             logger.error("Failed to fetch timesheet detail: %s", exc)
             raise TimesheetServiceError(f"Failed to fetch timesheet detail: {exc}") from exc
 
+    # Response normalization and transport helpers
     def _normalize_reportview_response(
         self,
         data: Dict[str, Any],
@@ -316,28 +318,7 @@ class TimesheetService:
                 "Malformed timesheet detail response: invalid time_logs format."
             )
 
-        time_logs: List[Dict[str, Any]] = []
-        for raw_log in raw_time_logs:
-            if not isinstance(raw_log, dict):
-                raise TimesheetServiceError(
-                    "Malformed timesheet detail response: invalid time log row."
-                )
-            time_logs.append(
-                {
-                    "name": raw_log.get("name"),
-                    "activity_type": raw_log.get("activity_type"),
-                    "project": raw_log.get("project"),
-                    "project_name": raw_log.get("project_name"),
-                    "description": raw_log.get("description"),
-                    "from_time": raw_log.get("from_time"),
-                    "to_time": raw_log.get("to_time"),
-                    "hours": raw_log.get("hours"),
-                    "is_billable": raw_log.get("is_billable"),
-                    "billing_hours": raw_log.get("billing_hours"),
-                    "billing_amount": raw_log.get("billing_amount"),
-                    "costing_amount": raw_log.get("costing_amount"),
-                }
-            )
+        time_logs = [self._normalize_time_log_row(raw_log) for raw_log in raw_time_logs]
 
         return {
             "name": raw_doc.get("name"),
@@ -445,6 +426,7 @@ class TimesheetService:
             return None
         return self._get_raw_timesheet_doc(summaries[0]["name"], csrf_token=csrf_token)
 
+    # Smart-log state and mutation helpers
     def _build_smart_log_state_from_doc(
         self,
         raw_doc: Optional[Dict[str, Any]],
@@ -541,71 +523,50 @@ class TimesheetService:
         is_new_doc: bool,
     ) -> Dict[str, Any]:
         """Apply one smart-log save to a raw timesheet doc payload."""
-        previous_dt = self._coerce_optional_datetime(previous_state.get("timestamp") if previous_state else None)
-        same_day_previous = previous_dt is not None and previous_dt.date() == current_dt.date()
-        interval_hours = round(interval_seconds / 3600, 6)
-        should_merge = (
-            previous_state is not None
-            and previous_state.get("timesheet_name") == timesheet_doc.get("name")
-            and previous_state.get("project_id") == project_id
-            and previous_state.get("activity_name") == activity
-            and previous_state.get("description") == description
-            and bool(previous_state.get("is_billable")) == is_billable
+        previous_dt = self._coerce_optional_datetime(
+            previous_state.get("timestamp") if previous_state else None
         )
-
+        interval_hours = round(interval_seconds / 3600, 6)
         time_logs = list(timesheet_doc.get("time_logs") or [])
-        if should_merge:
-            target_row = self._find_time_log_by_name(time_logs, previous_state.get("row_name"))
-            if target_row is None:
-                raise TimesheetServiceError("Could not find the previous timesheet row to update.")
+        timesheet_doc["time_logs"] = time_logs
 
-            start_dt = self._coerce_optional_datetime(target_row.get("from_time"))
-            previous_to_dt = self._coerce_optional_datetime(target_row.get("to_time"))
-            if start_dt and previous_to_dt and previous_to_dt < start_dt:
-                raise TimesheetServiceError("Existing timesheet row has invalid time boundaries.")
-
-            target_row["project"] = project_id
-            target_row["project_name"] = project_name
-            target_row["activity_type"] = activity
-            target_row["description"] = description
-            target_row["is_billable"] = 1 if is_billable else 0
-            next_to_dt = current_dt
-            if previous_to_dt and next_to_dt < previous_to_dt:
-                raise TimesheetServiceError("New smart-log time cannot be earlier than the existing row end time.")
-            target_row["to_time"] = self._format_doc_datetime(next_to_dt)
-            target_row["modified"] = self._format_doc_datetime(current_dt, include_microseconds=True)
-            target_row["modified_by"] = employee
-
-            hours = self._compute_hours(start_dt, next_to_dt) if start_dt else interval_hours
-            target_row["hours"] = hours
-            target_row["billing_hours"] = hours if is_billable else 0.0
+        if self._should_merge_with_previous(
+            previous_state=previous_state,
+            timesheet_name=timesheet_doc.get("name"),
+            project_id=project_id,
+            activity=activity,
+            description=description,
+            is_billable=is_billable,
+        ):
+            self._merge_into_existing_time_log(
+                time_logs=time_logs,
+                previous_state=previous_state,
+                project_id=project_id,
+                project_name=project_name,
+                activity=activity,
+                description=description,
+                is_billable=is_billable,
+                current_dt=current_dt,
+                employee=employee,
+                interval_hours=interval_hours,
+            )
         else:
-            if same_day_previous:
-                to_dt = current_dt
-                from_dt = previous_dt
-                if from_dt and to_dt < from_dt:
-                    raise TimesheetServiceError("New smart-log time cannot be earlier than the previous row end time.")
-                hours = self._compute_hours(from_dt, to_dt) if from_dt else interval_hours
-            else:
-                to_dt = current_dt
-                from_dt = to_dt - self._interval_delta(interval_seconds)
-                hours = interval_hours
             time_logs.append(
-                self._build_time_log_row(
-                    parent_name=timesheet_doc["name"],
-                    current_dt=to_dt,
-                    from_dt=from_dt,
-                    hours=hours,
+                self._build_new_smart_log_row(
+                    timesheet_name=timesheet_doc["name"],
+                    time_logs=time_logs,
+                    previous_dt=previous_dt,
+                    current_dt=current_dt,
+                    interval_seconds=interval_seconds,
+                    interval_hours=interval_hours,
                     project_id=project_id,
                     project_name=project_name,
                     activity=activity,
                     description=description,
                     is_billable=is_billable,
-                    idx=len(time_logs) + 1,
                     owner=timesheet_doc.get("owner") or employee,
                 )
             )
-            timesheet_doc["time_logs"] = time_logs
 
         self._recompute_timesheet_totals(timesheet_doc)
         timesheet_doc["__unsaved"] = 1
@@ -615,6 +576,121 @@ class TimesheetService:
             timesheet_doc["modified"] = self._format_doc_datetime(current_dt, include_microseconds=True)
 
         return timesheet_doc
+
+    def _should_merge_with_previous(
+        self,
+        previous_state: Optional[Dict[str, Any]],
+        timesheet_name: Optional[str],
+        project_id: str,
+        activity: str,
+        description: str,
+        is_billable: bool,
+    ) -> bool:
+        """Return whether the latest smart-log can extend the previous row."""
+        return (
+            previous_state is not None
+            and previous_state.get("timesheet_name") == timesheet_name
+            and previous_state.get("project_id") == project_id
+            and previous_state.get("activity_name") == activity
+            and previous_state.get("description") == description
+            and bool(previous_state.get("is_billable")) == is_billable
+        )
+
+    def _merge_into_existing_time_log(
+        self,
+        time_logs: List[Dict[str, Any]],
+        previous_state: Optional[Dict[str, Any]],
+        project_id: str,
+        project_name: str,
+        activity: str,
+        description: str,
+        is_billable: bool,
+        current_dt: datetime,
+        employee: str,
+        interval_hours: float,
+    ) -> None:
+        """Extend the previously saved row when the new log matches its identity."""
+        target_row = self._find_time_log_by_name(time_logs, previous_state.get("row_name"))
+        if target_row is None:
+            raise TimesheetServiceError("Could not find the previous timesheet row to update.")
+
+        start_dt = self._coerce_optional_datetime(target_row.get("from_time"))
+        previous_to_dt = self._coerce_optional_datetime(target_row.get("to_time"))
+        if start_dt and previous_to_dt and previous_to_dt < start_dt:
+            raise TimesheetServiceError("Existing timesheet row has invalid time boundaries.")
+        if previous_to_dt and current_dt < previous_to_dt:
+            raise TimesheetServiceError("New smart-log time cannot be earlier than the existing row end time.")
+
+        target_row.update(
+            {
+                "project": project_id,
+                "project_name": project_name,
+                "activity_type": activity,
+                "description": description,
+                "is_billable": 1 if is_billable else 0,
+                "to_time": self._format_doc_datetime(current_dt),
+                "modified": self._format_doc_datetime(current_dt, include_microseconds=True),
+                "modified_by": employee,
+            }
+        )
+
+        hours = self._compute_hours(start_dt, current_dt) if start_dt else interval_hours
+        target_row["hours"] = hours
+        target_row["billing_hours"] = hours if is_billable else 0.0
+
+    def _build_new_smart_log_row(
+        self,
+        timesheet_name: str,
+        time_logs: List[Dict[str, Any]],
+        previous_dt: Optional[datetime],
+        current_dt: datetime,
+        interval_seconds: int,
+        interval_hours: float,
+        project_id: str,
+        project_name: str,
+        activity: str,
+        description: str,
+        is_billable: bool,
+        owner: str,
+    ) -> Dict[str, Any]:
+        """Create a new smart-log row using either the previous end time or the interval."""
+        from_dt, to_dt, hours = self._resolve_new_time_log_window(
+            previous_dt=previous_dt,
+            current_dt=current_dt,
+            interval_seconds=interval_seconds,
+            interval_hours=interval_hours,
+        )
+        return self._build_time_log_row(
+            parent_name=timesheet_name,
+            current_dt=to_dt,
+            from_dt=from_dt,
+            hours=hours,
+            project_id=project_id,
+            project_name=project_name,
+            activity=activity,
+            description=description,
+            is_billable=is_billable,
+            idx=len(time_logs) + 1,
+            owner=owner,
+        )
+
+    def _resolve_new_time_log_window(
+        self,
+        previous_dt: Optional[datetime],
+        current_dt: datetime,
+        interval_seconds: int,
+        interval_hours: float,
+    ) -> Tuple[datetime, datetime, float]:
+        """Return the start, end, and hours for a new smart-log row."""
+        if previous_dt is not None and previous_dt.date() == current_dt.date():
+            if current_dt < previous_dt:
+                raise TimesheetServiceError(
+                    "New smart-log time cannot be earlier than the previous row end time."
+                )
+            return previous_dt, current_dt, self._compute_hours(previous_dt, current_dt)
+
+        from_dt = current_dt - self._interval_delta(interval_seconds)
+        return from_dt, current_dt, interval_hours
 
     def _post_timesheet_doc(
         self,
@@ -637,6 +713,27 @@ class TimesheetService:
                 include_doctype_header=False,
             ),
         )
+
+    # Raw doc shaping helpers
+    def _normalize_time_log_row(self, raw_log: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize one time log row returned from getdoc."""
+        if not isinstance(raw_log, dict):
+            raise TimesheetServiceError("Malformed timesheet detail response: invalid time log row.")
+
+        return {
+            "name": raw_log.get("name"),
+            "activity_type": raw_log.get("activity_type"),
+            "project": raw_log.get("project"),
+            "project_name": raw_log.get("project_name"),
+            "description": raw_log.get("description"),
+            "from_time": raw_log.get("from_time"),
+            "to_time": raw_log.get("to_time"),
+            "hours": raw_log.get("hours"),
+            "is_billable": raw_log.get("is_billable"),
+            "billing_hours": raw_log.get("billing_hours"),
+            "billing_amount": raw_log.get("billing_amount"),
+            "costing_amount": raw_log.get("costing_amount"),
+        }
 
     def _build_time_log_row(
         self,
@@ -740,6 +837,7 @@ class TimesheetService:
                 return row
         return None
 
+    # Date/time and request formatting helpers
     def _coerce_datetime(self, value: Optional[Any]) -> datetime:
         """Convert supported save timestamps into a datetime."""
         if value is None:
