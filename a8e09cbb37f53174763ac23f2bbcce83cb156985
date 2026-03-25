@@ -1,0 +1,23 @@
+src/services/timesheet_service.py
+  b14d53b1e721a801 55,261,321,429,526-527,529,531-552,555-561,580-690,692-694,717-736,840
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "a8e09cbb37f53174763ac23f2bbcce83cb156985",
+  "prompts": {
+    "b14d53b1e721a801": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d2579-5470-71a0-92f7-1a911756b194",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 173,
+      "total_deletions": 75,
+      "accepted_lines": 173,
+      "overriden_lines": 0
+    }
+  }
+}
