@@ -1,0 +1,40 @@
+src/services/timesheet_service.py
+  ce87a605712e7bf0 85-88,111,186-197,200-215,221-224,226-228,260-264,267-275,277-281,287-291,368,386,442,447-458,460-470,487,528-639,820-826
+  d29337aafcd8bddc 1-84,89-110,112-185,198-199,216-220,225,229-259,265-266,276,282-286,292-367,369-385,387-441,443-446,459,471-486,488-527,640-819
+tests/test_timesheet_service.py
+  ce87a605712e7bf0 127-149,236,281,307-369,371-456,503,541-543,545-711,713-747
+  d29337aafcd8bddc 1-126,150-235,237-280,282-306,370,457-502,504-540,544,712,748-756
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "2920d4d330aa408962f78292deb1640da8a43d10",
+  "prompts": {
+    "ce87a605712e7bf0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d2555-cf1d-73e2-a5b2-71d9c1f33224",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 594,
+      "total_deletions": 82,
+      "accepted_lines": 590,
+      "overriden_lines": 0
+    },
+    "d29337aafcd8bddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d249c-8de7-7fe1-8019-fdd9ec2e45d6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 1191,
+      "total_deletions": 121,
+      "accepted_lines": 992,
+      "overriden_lines": 0
+    }
+  }
+}
