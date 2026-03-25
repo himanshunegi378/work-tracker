@@ -71,6 +71,11 @@ class LogView(QWidget):
         meta.setStyleSheet("font-size: 11px; color: #757575;")
         layout.addWidget(meta)
 
+        if log.activity_name:
+            activity = QLabel(f"Activity: {log.activity_name}")
+            activity.setStyleSheet("font-size: 12px; color: #546E7A;")
+            layout.addWidget(activity)
+
         desc = QLabel(log.description)
         desc.setWordWrap(True)
         desc.setStyleSheet("font-size: 13px; color: #424242;")

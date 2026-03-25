@@ -47,11 +47,15 @@ class SidebarView(QFrame):
         self.home_btn = self._create_nav_item("🏠", "HOME", "home")
         self.project_btn = self._create_nav_item("📁", "PROJECTS", "projects")
         self.log_btn = self._create_nav_item("📋", "LOGS", "logs")
+        self.activity_btn = self._create_nav_item("⚡", "ACTIVITIES", "activities")
+        self.settings_btn = self._create_nav_item("⚙️", "SETTINGS", "settings")
 
         layout.addWidget(self.home_btn)
         layout.addWidget(self.project_btn)
         layout.addWidget(self.log_btn)
+        layout.addWidget(self.activity_btn)
         layout.addStretch()
+        layout.addWidget(self.settings_btn)
 
         # Set default active
         self.set_active("home")
@@ -83,11 +87,13 @@ class SidebarView(QFrame):
         self.home_btn.setProperty("active", str(module_id == "home").lower())
         self.project_btn.setProperty("active", str(module_id == "projects").lower())
         self.log_btn.setProperty("active", str(module_id == "logs").lower())
-        
+        self.activity_btn.setProperty("active", str(module_id == "activities").lower())
+        self.settings_btn.setProperty("active", str(module_id == "settings").lower())
+
         # Refresh stylesheet to apply property-based styles
-        self.style().unpolish(self.home_btn)
-        self.style().polish(self.home_btn)
-        self.style().unpolish(self.project_btn)
-        self.style().polish(self.project_btn)
-        self.style().unpolish(self.log_btn)
-        self.style().polish(self.log_btn)
+        for btn in (
+            self.home_btn, self.project_btn, self.log_btn,
+            self.activity_btn, self.settings_btn,
+        ):
+            self.style().unpolish(btn)
+            self.style().polish(btn)

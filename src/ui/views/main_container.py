@@ -5,6 +5,8 @@ from ui.views.sidebar_view import SidebarView
 from ui.views.dashboard_view import DashboardView
 from ui.views.home_view import HomeView
 from ui.views.log_view import LogView
+from ui.views.settings_view import SettingsView
+from ui.views.activity_list_view import ActivityListView
 
 class MainContainer(QWidget):
     """The root container orchestrating the sidebar and stacked content area."""
@@ -29,10 +31,14 @@ class MainContainer(QWidget):
         self.dash_view = DashboardView()
         self.home_view = HomeView()  # This serves as the Projects List
         self.log_view = LogView()
+        self.settings_view = SettingsView()
+        self.activity_view = ActivityListView()
 
-        self.stack.addWidget(self.dash_view)  # Index 0
-        self.stack.addWidget(self.home_view)  # Index 1
-        self.stack.addWidget(self.log_view)   # Index 2
+        self.stack.addWidget(self.dash_view)       # Index 0
+        self.stack.addWidget(self.home_view)       # Index 1
+        self.stack.addWidget(self.log_view)        # Index 2
+        self.stack.addWidget(self.settings_view)   # Index 3
+        self.stack.addWidget(self.activity_view)   # Index 4
 
     def switch_to_home(self):
         self.stack.setCurrentIndex(0)
@@ -45,3 +51,11 @@ class MainContainer(QWidget):
     def switch_to_logs(self):
         self.stack.setCurrentIndex(2)
         self.sidebar.set_active("logs")
+
+    def switch_to_settings(self):
+        self.stack.setCurrentIndex(3)
+        self.sidebar.set_active("settings")
+
+    def switch_to_activities(self):
+        self.stack.setCurrentIndex(4)
+        self.sidebar.set_active("activities")

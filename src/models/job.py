@@ -4,6 +4,8 @@ import time
 
 @dataclass
 class Job:
+    """Store scheduler metadata for one recurring background task."""
+
     name: str
     task_func: Callable
     interval_seconds: int
@@ -18,5 +20,5 @@ class Job:
         self.last_run = time.time() - self.interval_seconds
 
     def update_last_run(self):
-        """Updates the timestamp of the last execution."""
+        """Record that the job has just started a new execution window."""
         self.last_run = time.time()

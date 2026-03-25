@@ -1,6 +1,13 @@
 from ui.contracts import ProjectAddViewInterface
 from services.project_manager import ProjectManager
 
+# ---------------------------------------------------------------------------
+# DEPRECATED: ProjectAddPresenter is no longer used by the GUI.
+# The Projects page is now read-only (API-backed via ProjectService).
+# This file is kept to avoid breaking any incremental imports until a
+# full cleanup pass is performed.
+# ---------------------------------------------------------------------------
+
 class ProjectAddPresenter:
     """The 'Brain' that coordinates the View and Service layers."""
     

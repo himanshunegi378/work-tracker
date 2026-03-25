@@ -4,13 +4,10 @@ from typing import List, Callable, Optional
 from models.job import Job
 
 class CronScheduler:
+    """Run named jobs on independent intervals from a shared heartbeat thread."""
+
     def __init__(self, tick_interval: float = 1.0):
-        """
-        An extensible scheduler to manage multiple tasks with their own intervals.
-        
-        Args:
-            tick_interval: How often the internal 'heartbeat' checks for due jobs (default 1s).
-        """
+        """Create the scheduler and configure how often due jobs are checked."""
         self.tick_interval = tick_interval
         self._jobs: List[Job] = []
         self._jobs_lock = threading.Lock()
@@ -19,7 +16,7 @@ class CronScheduler:
         self._is_running = False
 
     def add_job(self, name: str, task_func: Callable, interval_seconds: int, invoke_on_start: bool = False):
-        """Registers a new job with its own execution interval."""
+        """Register a job definition without starting the scheduler automatically."""
         with self._jobs_lock:
             new_job = Job(name=name, task_func=task_func, interval_seconds=interval_seconds)
             
@@ -30,7 +27,7 @@ class CronScheduler:
             print(f"➕ Registered job '{name}' every {interval_seconds}s (Invoke on start: {invoke_on_start}).")
 
     def start(self):
-        """Starts the scheduler's heartbeat in a background thread."""
+        """Start the background heartbeat that watches for due jobs."""
         if self._is_running:
             return
         self._is_running = True
@@ -40,7 +37,7 @@ class CronScheduler:
         print("🚀 Scheduler heartbeat started.")
 
     def _heartbeat_loop(self):
-        """The core timing loop checking which jobs are due."""
+        """Poll due jobs and dispatch each run in its own worker thread."""
         while not self._stop_event.is_set():
             with self._jobs_lock:
                 for job in self._jobs:
@@ -53,7 +50,7 @@ class CronScheduler:
             time.sleep(self.tick_interval)
 
     def _execute_job(self, job: Job):
-        """Wraps job execution with metadata updates and error handling."""
+        """Execute one job safely while keeping its scheduling metadata current."""
         try:
             # We update BEFORE so a long execution doesn't cause overlapping runs 
             # if we wanted skip-overlapping logic.
@@ -63,7 +60,7 @@ class CronScheduler:
             print(f"❌ Error executing job '{job.name}': {e}")
 
     def stop(self):
-        """Stops the heartbeat and clears all jobs."""
+        """Stop the scheduler thread and forget all registered jobs."""
         self._stop_event.set()
         self._is_running = False
         if self._thread:
@@ -73,4 +70,5 @@ class CronScheduler:
         print("🛑 Scheduler stopped.")
 
     def is_active(self) -> bool:
+        """Report whether the scheduler heartbeat is currently running."""
         return self._is_running
