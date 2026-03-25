@@ -137,11 +137,12 @@ class SettingsView(QWidget):
         self.username_input.setEnabled(not is_loading)
         self.password_input.setEnabled(not is_loading)
         
-    def populate_credentials(self, username: str):
-        """Pre-fills the username field."""
+    def populate_credentials(self, username: str, password: str = ""):
+        """Pre-fills the username and password fields."""
         if username:
             self.username_input.setText(username)
-            # We don't populate the password for security/UI expectation reasons (unless requested)
+        if password:
+            self.password_input.setText(password)
             
     def show_success(self, message: str):
         """Displays a success notification to the user."""

@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from PySide6.QtWidgets import QApplication
 
-from models.log import Log
 from ui.views.smart_log_dialog import SmartLogDialog
 
 
@@ -18,22 +17,18 @@ class TestSmartLogDialog(unittest.TestCase):
         cls.app = QApplication.instance() or QApplication([])
 
     def test_save_disabled_when_activity_cache_missing(self):
-        log_manager = MagicMock()
-        log_manager.get_last_log.return_value = None
-
-        dialog = SmartLogDialog(["Project A"], [], log_manager)
+        dialog = SmartLogDialog(
+            [{"id": "PROJ-1", "name": "Project A"}],
+            [],
+        )
 
         self.assertFalse(dialog.save_btn.isEnabled())
-        self.assertTrue(dialog.status_label.isVisible())
+        self.assertFalse(dialog.status_label.isHidden())
 
     def test_filter_activities_reduces_visible_options(self):
-        log_manager = MagicMock()
-        log_manager.get_last_log.return_value = None
-
         dialog = SmartLogDialog(
-            ["Project A"],
+            [{"id": "PROJ-1", "name": "Project A"}],
             ["Code Review", "Testing", "Documentation"],
-            log_manager,
         )
 
         dialog._filter_activities("test")
@@ -41,32 +36,30 @@ class TestSmartLogDialog(unittest.TestCase):
         self.assertEqual(dialog._activity_model.rowCount(), 1)
         self.assertEqual(dialog._activity_model.item(0).text(), "Testing")
 
-    def test_last_log_prefills_project_activity_and_description(self):
-        log_manager = MagicMock()
-        log_manager.get_last_log.return_value = Log(
-            description="Finish auth flow",
-            project_name="Project B",
-            activity_name="Code Review",
-        )
-
+    def test_smart_defaults_prefill_project_activity_description_and_billable(self):
         dialog = SmartLogDialog(
-            ["Project A", "Project B"],
+            [
+                {"id": "PROJ-1", "name": "Project A"},
+                {"id": "PROJ-2", "name": "Project B"},
+            ],
             ["Code Review", "Testing"],
-            log_manager,
+            smart_defaults={
+                "project_name": "Project B",
+                "activity_name": "Code Review",
+                "description": "Finish auth flow",
+                "is_billable": True,
+            },
         )
 
         self.assertEqual(dialog.project_cb.currentText(), "Project B")
         self.assertEqual(dialog.activity_cb.currentText(), "Code Review")
         self.assertEqual(dialog.desc_input.text(), "Finish auth flow")
+        self.assertTrue(dialog.billable_cb.isChecked())
 
     def test_save_requires_valid_activity(self):
-        log_manager = MagicMock()
-        log_manager.get_last_log.return_value = None
-
         dialog = SmartLogDialog(
-            ["Project A"],
+            [{"id": "PROJ-1", "name": "Project A"}],
             ["Code Review", "Testing"],
-            log_manager,
         )
         dialog.project_cb.setCurrentText("Project A")
         dialog.activity_cb.lineEdit().setText("Unknown")
@@ -74,7 +67,30 @@ class TestSmartLogDialog(unittest.TestCase):
 
         dialog._on_save()
 
-        log_manager.add_log.assert_not_called()
+        self.assertIsNone(dialog.get_submission())
+
+    def test_save_returns_structured_submission(self):
+        dialog = SmartLogDialog(
+            [{"id": "PROJ-1", "name": "Project A"}],
+            ["Code Review", "Testing"],
+        )
+        dialog.project_cb.setCurrentIndex(0)
+        dialog.activity_cb.setCurrentText("Code Review")
+        dialog.desc_input.setText("Worked on a task")
+        dialog.billable_cb.setChecked(True)
+
+        dialog._on_save()
+
+        self.assertEqual(
+            dialog.get_submission(),
+            {
+                "project_id": "PROJ-1",
+                "project_name": "Project A",
+                "activity_name": "Code Review",
+                "description": "Worked on a task",
+                "is_billable": True,
+            },
+        )
 
 
 if __name__ == "__main__":

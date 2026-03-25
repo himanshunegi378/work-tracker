@@ -20,32 +20,32 @@ class SettingsPresenter(QObject):
         self._populate_initial_state()
         
     def _populate_initial_state(self):
-        """Pre-fill the view with any username already saved on disk."""
-        # Check if auth_service has previously loaded credentials via its credential_storage
-        if hasattr(self.auth, 'get_saved_username'):
-            saved_user = self.auth.get_saved_username()
-            if saved_user:
-                self.view.populate_credentials(saved_user)
+        """Pre-fill the view with any credentials already saved and attempt auto-login."""
+        saved_user = self.auth.get_saved_username() if hasattr(self.auth, 'get_saved_username') else None
+        saved_pass = self.auth.get_saved_password() if hasattr(self.auth, 'get_saved_password') else None
+        
+        if saved_user:
+            self.view.populate_credentials(saved_user, saved_pass or "")
+            
+            # If both are present, trigger an initial login check to verify the session
+            if saved_pass:
+                # We trigger this after a short delay to ensure UI is ready
+                QTimer.singleShot(500, lambda: self._execute_save(saved_user, saved_pass, silent=True))
                 
     @Slot(str, str)
     def handle_save_credentials(self, username, password):
         """Validate the provided credentials and persist them through AuthService."""
         self.view.set_loading(True)
-        
-        # Due to potential UI blocking by synchronous HTTP requests, process events.
-        # For a truly non-blocking architecture, threading/QRunnable should be used.
-        # Using a QTimer to offload the call allows the UI to update "Saving..." text before blocking.
-        QTimer.singleShot(50, lambda: self._execute_save(username, password))
-        
-    def _execute_save(self, username, password):
+        QTimer.singleShot(50, lambda: self._execute_save(username, password, silent=False))
+
+    def _execute_save(self, username, password, silent=False):
         """Run the actual save flow after the UI has had a chance to update."""
         try:
             # Login authenticates against the backend
             success = self.auth.login(username, password)
             if success:
-                # With successful login, we also tell auth service to persist these.
-                # In current implementation, Auth service will persist them if we adapt it.
-                self.view.show_success("Credentials saved and verified successfully.")
+                if not silent:
+                    self.view.show_success("Credentials saved and verified successfully.")
             else:
                 self.view.show_error("Validation failed. Check your credentials.")
         except Exception as e:

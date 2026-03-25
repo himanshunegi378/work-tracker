@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, Signal, QSize
 
 class SidebarView(QFrame):
     """A vertical navigation sidebar for switching between main application modules."""
-    nav_requested = Signal(str)  # Emits the module name: "home", "projects", or "logs"
+    nav_requested = Signal(str)  # Emits the current module id.
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -46,14 +46,14 @@ class SidebarView(QFrame):
         # Navigation Buttons
         self.home_btn = self._create_nav_item("🏠", "HOME", "home")
         self.project_btn = self._create_nav_item("📁", "PROJECTS", "projects")
-        self.log_btn = self._create_nav_item("📋", "LOGS", "logs")
         self.activity_btn = self._create_nav_item("⚡", "ACTIVITIES", "activities")
+        self.timesheet_btn = self._create_nav_item("⏱️", "TIMESHEETS", "timesheets")
         self.settings_btn = self._create_nav_item("⚙️", "SETTINGS", "settings")
 
         layout.addWidget(self.home_btn)
         layout.addWidget(self.project_btn)
-        layout.addWidget(self.log_btn)
         layout.addWidget(self.activity_btn)
+        layout.addWidget(self.timesheet_btn)
         layout.addStretch()
         layout.addWidget(self.settings_btn)
 
@@ -86,14 +86,14 @@ class SidebarView(QFrame):
         """Visually updates which navigation item is selected."""
         self.home_btn.setProperty("active", str(module_id == "home").lower())
         self.project_btn.setProperty("active", str(module_id == "projects").lower())
-        self.log_btn.setProperty("active", str(module_id == "logs").lower())
         self.activity_btn.setProperty("active", str(module_id == "activities").lower())
+        self.timesheet_btn.setProperty("active", str(module_id == "timesheets").lower())
         self.settings_btn.setProperty("active", str(module_id == "settings").lower())
 
         # Refresh stylesheet to apply property-based styles
         for btn in (
-            self.home_btn, self.project_btn, self.log_btn,
-            self.activity_btn, self.settings_btn,
+            self.home_btn, self.project_btn,
+            self.activity_btn, self.timesheet_btn, self.settings_btn,
         ):
             self.style().unpolish(btn)
             self.style().polish(btn)

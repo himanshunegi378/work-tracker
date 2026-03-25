@@ -1,12 +1,11 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QLineEdit,
-    QComboBox, QPushButton, QLabel, QHBoxLayout
+    QComboBox, QPushButton, QLabel, QHBoxLayout, QCheckBox
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItemModel, QStandardItem
-from services.log_manager import LogManager
 
 
 class SmartLogDialog(QDialog):
@@ -25,17 +24,17 @@ class SmartLogDialog(QDialog):
 
     def __init__(
         self,
-        project_names: List[str],
+        project_options: List[Dict[str, str]],
         activity_names: List[str],
-        lm: LogManager,
+        smart_defaults: Optional[Dict[str, object]] = None,
         parent=None,
         activity_status_message: Optional[str] = None,
     ):
         super().__init__(parent)
-        self._project_names = project_names
+        self._project_options = project_options
         self._activity_names = activity_names
+        self._smart_defaults = smart_defaults or {}
         self._activity_status_message = activity_status_message
-        self.lm = lm
         self.setWindowTitle("Log Your Progress")
         self.setMinimumWidth(350)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
@@ -57,9 +56,9 @@ class SmartLogDialog(QDialog):
 
         # Project selection — populated from the pre-fetched list
         self.project_cb = QComboBox()
-        for name in self._project_names:
-            self.project_cb.addItem(name)
-        if not self._project_names:
+        for option in self._project_options:
+            self.project_cb.addItem(option["name"], option["id"])
+        if not self._project_options:
             self.project_cb.addItem("(no projects loaded)")
 
         # Log description
@@ -79,9 +78,12 @@ class SmartLogDialog(QDialog):
         self.activity_cb.lineEdit().selectionChanged.connect(self._show_all_activities)
         self.activity_cb.lineEdit().setClearButtonEnabled(True)
 
+        self.billable_cb = QCheckBox("Billable")
+
         form.addRow("Project:", self.project_cb)
         form.addRow("Activity:", self.activity_cb)
         form.addRow("Doing:",   self.desc_input)
+        form.addRow("", self.billable_cb)
         layout.addLayout(form)
 
         self.status_label = QLabel()
@@ -124,24 +126,29 @@ class SmartLogDialog(QDialog):
         layout.addLayout(btn_row)
 
     def _load_smart_defaults(self) -> None:
-        """Pre-fills fields with the last log's data (Smart Persistence)."""
-        last_log = self.lm.get_last_log()
-        if last_log:
-            idx = self.project_cb.findText(last_log.project_name)
+        """Pre-fill from latest timesheet-backed smart-log state when available."""
+        project_name = str(self._smart_defaults.get("project_name") or "")
+        activity_name = str(self._smart_defaults.get("activity_name") or "")
+        description = str(self._smart_defaults.get("description") or "")
+
+        if project_name or activity_name or description:
+            idx = self.project_cb.findText(project_name)
             if idx >= 0:
                 self.project_cb.setCurrentIndex(idx)
 
-            activity_idx = self.activity_cb.findText(last_log.activity_name)
+            activity_idx = self.activity_cb.findText(activity_name)
             if activity_idx >= 0:
                 self.activity_cb.setCurrentIndex(activity_idx)
-            elif last_log.activity_name:
-                self.activity_cb.lineEdit().setText(last_log.activity_name)
+            elif activity_name:
+                self.activity_cb.lineEdit().setText(activity_name)
 
-            self.desc_input.setText(last_log.description)
+            self.desc_input.setText(description)
+            self.billable_cb.setChecked(bool(self._smart_defaults.get("is_billable")))
             self.desc_input.selectAll()
             self.desc_input.setFocus()
         elif self._activity_names:
             self.activity_cb.lineEdit().setText("")
+            self.billable_cb.setChecked(False)
 
     def _set_activity_options(self, activity_names: List[str]) -> None:
         self._activity_model.clear()
@@ -164,15 +171,33 @@ class SmartLogDialog(QDialog):
 
     def _on_save(self) -> None:
         project = self.project_cb.currentText()
+        project_id = self.project_cb.currentData()
         activity = self.activity_cb.currentText().strip()
         desc    = self.desc_input.text().strip()
         if (
             not project
+            or not project_id
             or not activity
             or not desc
             or activity not in self._activity_names
             or project == "(no projects loaded)"
         ):
             return
-        self.lm.add_log(project, desc, activity)
+        self._submission = {
+            "project_id": str(project_id),
+            "project_name": project,
+            "activity_name": activity,
+            "description": desc,
+            "is_billable": self.billable_cb.isChecked(),
+        }
         self.accept()
+
+    def get_submission(self) -> Optional[Dict[str, object]]:
+        """Return the structured smart-log payload captured from the dialog."""
+        return getattr(self, "_submission", None)
+
+    def set_error_message(self, message: str) -> None:
+        """Show a save/fetch error message in the dialog footer."""
+        self.status_label.setText(message)
+        self.status_label.setStyleSheet("color: #C62828; font-size: 12px;")
+        self.status_label.show()

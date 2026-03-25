@@ -89,7 +89,7 @@ class DashboardView(QWidget):
         self.stats_layout.setSpacing(15)
         
         self.project_stat = StatCard("Total Projects", "0", "#2196F3")
-        self.log_stat = StatCard("Activity Logs", "0", "#4CAF50")
+        self.log_stat = StatCard("Timesheet Rows", "0", "#4CAF50")
         
         self.stats_layout.addWidget(self.project_stat)
         self.stats_layout.addWidget(self.log_stat)

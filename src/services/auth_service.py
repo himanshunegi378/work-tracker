@@ -154,6 +154,12 @@ class AuthService:
         if self.auto_login_credentials:
             return self.auto_login_credentials.get("username")
         return None
+
+    def get_saved_password(self) -> Optional[str]:
+        """Expose the remembered password so the login form can prefill it."""
+        if self.auto_login_credentials:
+            return self.auto_login_credentials.get("password")
+        return None
         
     def clear_saved_credentials(self) -> None:
         """Remove persisted credentials and end any active local session."""

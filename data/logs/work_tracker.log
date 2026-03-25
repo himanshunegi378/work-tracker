@@ -1,0 +1,111 @@
+2026-03-25 20:08:48,953 INFO [__main__] Scheduler triggered a smart log prompt
+2026-03-25 20:08:48,953 DEBUG [ui.workers.smart_log_options_fetch_worker] SmartLogOptionsFetchWorker.run(): page_length=200
+2026-03-25 20:08:48,954 DEBUG [urllib3.connectionpool] Resetting dropped connection: matrix.samta.ai
+2026-03-25 20:08:49,151 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:49,212 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=200&filters=%7B%7D&doctype=Project&_=1774449528953 HTTP/1.1" 200 None
+2026-03-25 20:08:49,266 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:49,324 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=200&doctype=Activity+Type&_=1774449529213 HTTP/1.1" 200 None
+2026-03-25 20:08:49,378 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:49,435 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:49,499 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-25 20:08:49,553 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:49,657 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.form.load.getdoc?doctype=Timesheet&name=TS-2026-01786&_=1774449529500 HTTP/1.1" 200 None
+2026-03-25 20:08:51,031 DEBUG [ui.workers.smart_log_save_worker] SmartLogSaveWorker.run(): saving smart-log payload to timesheet
+2026-03-25 20:08:51,033 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (2): matrix.samta.ai:443
+2026-03-25 20:08:51,083 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:51,135 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:51,202 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-25 20:08:51,226 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:51,283 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:51,349 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-25 20:08:51,404 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:51,501 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.form.load.getdoc?doctype=Timesheet&name=TS-2026-01786&_=1774449531350 HTTP/1.1" 200 None
+2026-03-25 20:08:51,556 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:08:51,624 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 14
+2026-03-25 20:08:51,625 ERROR [services.timesheet_service] Malformed timesheet reportview payload from _get_or_prepare_timesheet_for_day: missing message object | payload={"message": []}
+2026-03-25 20:08:51,625 ERROR [ui.workers.smart_log_save_worker] SmartLogSaveWorker failed: Malformed timesheet response: missing message object.
+2026-03-25 20:15:25,909 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-25 20:15:26,181 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-25 20:15:26,368 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-25 20:15:26,370 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"86d1e2291e322b8e1fdc5da8bc2c5801ae5c9afb35268b8c2e93be21\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Wed, 25 Mar 2026 14:45:26 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-25 20:15:26,370 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 63, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-25 20:15:26,398 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-25 20:15:26,653 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-25 20:15:27,045 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-25 20:15:27,438 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-25 20:15:37,442 INFO [__main__] Scheduler triggered a smart log prompt
+2026-03-25 20:15:37,443 DEBUG [ui.workers.smart_log_options_fetch_worker] SmartLogOptionsFetchWorker.run(): page_length=200
+2026-03-25 20:15:37,512 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:37,577 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=200&filters=%7B%7D&doctype=Project&_=1774449937443 HTTP/1.1" 200 None
+2026-03-25 20:15:37,636 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:37,696 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=200&doctype=Activity+Type&_=1774449937578 HTTP/1.1" 200 None
+2026-03-25 20:15:37,756 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:37,805 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:37,866 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-25 20:15:37,916 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:38,001 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.form.load.getdoc?doctype=Timesheet&name=TS-2026-01786&_=1774449937867 HTTP/1.1" 200 None
+2026-03-25 20:15:39,646 DEBUG [ui.workers.smart_log_save_worker] SmartLogSaveWorker.run(): saving smart-log payload to timesheet
+2026-03-25 20:15:39,647 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (2): matrix.samta.ai:443
+2026-03-25 20:15:39,694 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:39,746 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:39,807 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-25 20:15:39,827 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:39,878 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:39,944 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-25 20:15:39,996 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:40,096 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.form.load.getdoc?doctype=Timesheet&name=TS-2026-01786&_=1774449939945 HTTP/1.1" 200 None
+2026-03-25 20:15:40,147 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:40,209 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 14
+2026-03-25 20:15:40,260 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:40,319 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-25 20:15:40,369 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:40,453 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.form.load.getdoc?doctype=Timesheet&name=TS-2026-01786&_=1774449940320 HTTP/1.1" 200 None
+2026-03-25 20:15:40,506 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-25 20:15:40,682 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.form.save.savedocs HTTP/1.1" 200 None
