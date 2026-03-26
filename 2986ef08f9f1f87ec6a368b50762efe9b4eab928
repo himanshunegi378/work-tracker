@@ -1,0 +1,29 @@
+src/services/timesheet_smart_log.py
+  b14d53b1e721a801 1-402
+src/services/timesheet_parsing.py
+  b14d53b1e721a801 1-110
+src/services/timesheet_service.py
+  b14d53b1e721a801 5-6,10-21,145,261,264,357,364,388,400,404-405,412-415,441-442,468
+src/services/timesheet_shared.py
+  b14d53b1e721a801 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "2986ef08f9f1f87ec6a368b50762efe9b4eab928",
+  "prompts": {
+    "b14d53b1e721a801": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d2579-5470-71a0-92f7-1a911756b194",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 544,
+      "total_deletions": 486,
+      "accepted_lines": 544,
+      "overriden_lines": 0
+    }
+  }
+}
