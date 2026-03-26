@@ -109,3 +109,693 @@ api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summa
 2026-03-25 20:15:40,453 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.form.load.getdoc?doctype=Timesheet&name=TS-2026-01786&_=1774449940320 HTTP/1.1" 200 None
 2026-03-25 20:15:40,506 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
 2026-03-25 20:15:40,682 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.form.save.savedocs HTTP/1.1" 200 None
+2026-03-26 08:15:36,004 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:15:36,334 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:15:36,658 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:15:36,660 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"d43b1de69a0b49560537dd5d235c4ef1c81a09b069478b216a5a03aa\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 02:45:36 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:15:36,660 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:15:36,685 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:15:36,805 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:15:37,278 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:15:37,601 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:17:55,928 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:17:56,273 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:17:56,554 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:17:56,555 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"491ea62e2cab0cb0790d82e7cfdeb902a108f77c84995c4f171cae5a\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 02:47:56 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:17:56,556 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:17:56,580 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:17:56,746 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:17:57,203 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:17:57,594 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:18:04,846 DEBUG [ui.home_presenter] HomePresenter._fetch(): text='' page=0
+2026-03-26 08:18:04,847 DEBUG [ui.workers.project_fetch_worker] ProjectFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:18:04,906 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:18:04,958 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&filters=%7B%7D&doctype=Project&_=1774493284848 HTTP/1.1" 200 None
+2026-03-26 08:18:05,001 DEBUG [ui.home_presenter] HomePresenter: displayed 20 projects on page 0
+2026-03-26 08:18:06,088 DEBUG [ui.activity_list_presenter] ActivityListPresenter._fetch(): text='' page=0
+2026-03-26 08:18:06,089 DEBUG [ui.workers.activity_fetch_worker] ActivityFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:18:06,134 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:18:06,185 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&doctype=Activity+Type&_=1774493286089 HTTP/1.1" 200 None
+2026-03-26 08:18:06,187 DEBUG [ui.activity_list_presenter] ActivityListPresenter: displayed 20 activities on page 0
+2026-03-26 08:18:07,241 DEBUG [ui.timesheet_list_presenter] TimesheetListPresenter._fetch(): page=0
+2026-03-26 08:18:07,242 DEBUG [ui.workers.timesheet_fetch_worker] TimesheetFetchWorker.run(): start=0 page_length=20
+2026-03-26 08:18:07,289 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:18:07,334 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:18:07,394 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-26 08:18:07,398 DEBUG [ui.timesheet_list_presenter] TimesheetListPresenter: displayed 20 timesheets on page 0
+2026-03-26 08:18:09,973 DEBUG [ui.home_presenter] HomePresenter._fetch(): text='' page=0
+2026-03-26 08:18:09,974 DEBUG [ui.workers.project_fetch_worker] ProjectFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:18:10,020 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:18:10,072 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&filters=%7B%7D&doctype=Project&_=1774493289974 HTTP/1.1" 200 None
+2026-03-26 08:18:10,122 DEBUG [ui.home_presenter] HomePresenter: displayed 20 projects on page 0
+2026-03-26 08:19:31,239 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:19:31,519 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:19:31,722 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:19:31,723 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"4091203a743278f46b3d3ca37ad206e6e3eafa8535350b65a11896d0\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 02:49:31 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:19:31,723 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:19:31,744 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:19:32,042 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:19:32,544 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:19:32,883 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:22:47,523 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:22:47,936 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:22:53,115 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:22:53,117 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"7ed526b95ec65e895d50405b581e7fdebd42244a7c8828a07d4fc210\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 02:52:53 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:22:53,117 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:22:53,143 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:22:53,155 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:22:53,570 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:22:53,941 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:23:04,902 DEBUG [ui.home_presenter] HomePresenter._fetch(): text='' page=0
+2026-03-26 08:23:04,903 DEBUG [ui.workers.project_fetch_worker] ProjectFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:23:04,960 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:23:05,014 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&filters=%7B%7D&doctype=Project&_=1774493584903 HTTP/1.1" 200 None
+2026-03-26 08:23:05,052 DEBUG [ui.home_presenter] HomePresenter: displayed 20 projects on page 0
+2026-03-26 08:23:06,289 DEBUG [ui.activity_list_presenter] ActivityListPresenter._fetch(): text='' page=0
+2026-03-26 08:23:06,289 DEBUG [ui.workers.activity_fetch_worker] ActivityFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:23:06,333 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:23:06,384 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&doctype=Activity+Type&_=1774493586289 HTTP/1.1" 200 None
+2026-03-26 08:23:06,387 DEBUG [ui.activity_list_presenter] ActivityListPresenter: displayed 20 activities on page 0
+2026-03-26 08:23:08,413 DEBUG [ui.timesheet_list_presenter] TimesheetListPresenter._fetch(): page=0
+2026-03-26 08:23:08,413 DEBUG [ui.workers.timesheet_fetch_worker] TimesheetFetchWorker.run(): start=0 page_length=20
+2026-03-26 08:23:08,458 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:23:08,505 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:23:08,892 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-26 08:23:08,896 DEBUG [ui.timesheet_list_presenter] TimesheetListPresenter: displayed 20 timesheets on page 0
+2026-03-26 08:24:48,612 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:24:49,067 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:24:49,360 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:24:49,362 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"3387684ed151231a17b2408cd988efa513ff2b3a2e7cc9ae13c6b083\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 02:54:49 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:24:49,362 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:24:49,397 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:24:49,557 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:24:49,997 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:24:50,292 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:26:29,417 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:26:29,904 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:26:30,330 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:26:30,332 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"e7c058f658c28dff9fd7c395eb54aa55b2ca4da8feb1aef9209ededa\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 02:56:30 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:26:30,332 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:26:30,361 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:26:30,372 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:26:30,845 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:26:31,210 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:29:32,172 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:29:32,425 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:29:33,176 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:29:33,177 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"ce4762e5fb9a47a42ece9668f8b7f896e1f47b694e6381d252212e0d\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 02:59:33 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:29:33,177 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:29:33,202 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:29:33,211 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:29:33,659 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:29:33,960 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:30:46,291 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:30:46,543 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:30:46,858 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:30:46,860 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"f0b0eea7f75c6e8e22399549f3b8b7e484ce27597736ec5fc43cba2b\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 03:00:46 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:30:46,860 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:30:46,883 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:30:47,065 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:30:47,468 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:30:47,797 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:30:50,877 DEBUG [ui.home_presenter] HomePresenter._fetch(): text='' page=0
+2026-03-26 08:30:50,878 DEBUG [ui.workers.project_fetch_worker] ProjectFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:30:50,946 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:51,256 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&filters=%7B%7D&doctype=Project&_=1774494050878 HTTP/1.1" 200 None
+2026-03-26 08:30:51,294 DEBUG [ui.home_presenter] HomePresenter: displayed 20 projects on page 0
+2026-03-26 08:30:52,371 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:52,426 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:52,490 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-26 08:30:53,417 DEBUG [ui.activity_list_presenter] ActivityListPresenter._fetch(): text='' page=0
+2026-03-26 08:30:53,418 DEBUG [ui.workers.activity_fetch_worker] ActivityFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:30:53,470 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:53,528 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&doctype=Activity+Type&_=1774494053418 HTTP/1.1" 200 None
+2026-03-26 08:30:53,531 DEBUG [ui.activity_list_presenter] ActivityListPresenter: displayed 20 activities on page 0
+2026-03-26 08:30:54,577 DEBUG [ui.timesheet_list_presenter] TimesheetListPresenter._fetch(): page=0
+2026-03-26 08:30:54,583 DEBUG [ui.workers.timesheet_fetch_worker] TimesheetFetchWorker.run(): start=0 page_length=20
+2026-03-26 08:30:54,637 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:54,689 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:55,088 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-26 08:30:55,091 DEBUG [ui.timesheet_list_presenter] TimesheetListPresenter: displayed 20 timesheets on page 0
+2026-03-26 08:30:56,283 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:56,339 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:30:56,409 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /api/method/frappe.desk.reportview.get HTTP/1.1" 200 None
+2026-03-26 08:31:31,719 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:31:32,005 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:31:32,184 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:31:32,185 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"7b1894b2edc4966e71815ce90eb5fc89e16f418d46cb3b55358b8f3a\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 03:01:32 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:31:32,185 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:31:32,208 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:31:32,526 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:31:32,902 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:31:33,197 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:31:45,991 DEBUG [ui.home_presenter] HomePresenter._fetch(): text='' page=0
+2026-03-26 08:31:45,992 DEBUG [ui.workers.project_fetch_worker] ProjectFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:31:46,296 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:31:46,349 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&filters=%7B%7D&doctype=Project&_=1774494105993 HTTP/1.1" 200 None
+2026-03-26 08:31:46,388 DEBUG [ui.home_presenter] HomePresenter: displayed 20 projects on page 0
+2026-03-26 08:32:19,855 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:32:20,113 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:32:20,278 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:32:20,280 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"ceb3df0c73da552cd730f0a1a246361743dd76c4b3ba6aba95c86ead\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 03:02:20 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:32:20,280 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:32:20,301 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:32:20,635 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:32:20,982 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:32:21,336 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
+2026-03-26 08:32:24,200 DEBUG [ui.home_presenter] HomePresenter._fetch(): text='' page=0
+2026-03-26 08:32:24,201 DEBUG [ui.workers.project_fetch_worker] ProjectFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:32:24,258 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:32:24,370 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&filters=%7B%7D&doctype=Project&_=1774494144201 HTTP/1.1" 200 None
+2026-03-26 08:32:24,410 DEBUG [ui.home_presenter] HomePresenter: displayed 20 projects on page 0
+2026-03-26 08:32:27,103 DEBUG [ui.activity_list_presenter] ActivityListPresenter._fetch(): text='' page=0
+2026-03-26 08:32:27,103 DEBUG [ui.workers.activity_fetch_worker] ActivityFetchWorker.run(): search='' start=0 page_length=20
+2026-03-26 08:32:27,147 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 36
+2026-03-26 08:32:27,195 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.desk.search.search_widget?txt=&searchfield=name&start=0&page_length=20&doctype=Activity+Type&_=1774494147104 HTTP/1.1" 200 None
+2026-03-26 08:32:27,197 DEBUG [ui.activity_list_presenter] ActivityListPresenter: displayed 20 activities on page 0
+2026-03-26 08:33:18,672 INFO [__main__] Application logging configured at /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:33:18,921 DEBUG [urllib3.connectionpool] Starting new HTTPS connection (1): matrix.samta.ai:443
+2026-03-26 08:33:19,128 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 403 None
+2026-03-26 08:33:19,129 ERROR [api] Request failed for GET https://matrix.samta.ai/api/method/frappe.auth.get_logged_user: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+request={
+  "timeout": 10
+}
+response={
+  "body": {
+    "_server_messages": "[\"{\\\"message\\\": \\\"<details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\\", \\\"title\\\": \\\"Method Not Allowed\\\", \\\"indicator\\\": \\\"red\\\", \\\"raise_exception\\\": 1, \\\"__frappe_exc_id\\\": \\\"ceb1a198f6959425718adcf6de2ef855f4026be5923a6b6ebb10fd6f\\\"}\"]",
+    "exc": "[\"Traceback (most recent call last):\\n  File \\\"apps/frappe/frappe/app.py\\\", line 115, in application\\n    response = frappe.api.handle(request)\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/__init__.py\\\", line 49, in handle\\n    data = endpoint(**arguments)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/api/v1.py\\\", line 36, in handle_rpc_call\\n    return frappe.handler.handle()\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 51, in handle\\n    data = execute_cmd(cmd)\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"apps/frappe/frappe/handler.py\\\", line 81, in execute_cmd\\n    is_whitelisted(method)\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 861, in is_whitelisted\\n    throw(msg, PermissionError, title=_(\\\"Method Not Allowed\\\"))\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 606, in throw\\n    msgprint(\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 571, in msgprint\\n    _raise_exception()\\n  File \\\"apps/frappe/frappe/__init__.py\\\", line 522, in _raise_exception\\n    raise exc\\nfrappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>\\n\"]",
+    "exc_type": "PermissionError",
+    "exception": "frappe.exceptions.PermissionError: <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>"
+  },
+  "headers": {
+    "Connection": "keep-alive",
+    "Content-Encoding": "gzip",
+    "Content-Type": "application/json",
+    "Date": "Thu, 26 Mar 2026 03:03:19 GMT",
+    "Server": "nginx",
+    "Set-Cookie": "<redacted>",
+    "Transfer-Encoding": "chunked",
+    "Vary": "Accept-Encoding"
+  },
+  "status_code": 403
+}
+2026-03-26 08:33:19,129 ERROR [__main__] Failed to refresh dashboard timesheet stats
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 193, in _request
+    response.raise_for_status()
+  File "/home/himanshu/Desktop/Projects/work-tracker/.venv/lib/python3.12/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 403 Client Error: FORBIDDEN for url: https://matrix.samta.ai/api/method/frappe.auth.get_logged_user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/himanshu/Desktop/Projects/work-tracker/gui_main.py", line 123, in _refresh_dashboard
+    timesheet_count = len(self.timesheet_service.get_timesheets(page_length=20))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/timesheet_service.py", line 71, in get_timesheets
+    employee_filter = employee or self.auth_service.getSession()
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/services/auth_service.py", line 123, in getSession
+    response = self.api_client.get(self.get_user_endpoint)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 242, in get
+    return self._request('GET', endpoint, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/himanshu/Desktop/Projects/work-tracker/src/api.py", line 211, in _request
+    raise ApiClientError.from_response(
+api.ApiClientError: Request failed (HTTP 403): PermissionError | <details><summary>You are not permitted to access this resource.</summary>Function <strong>frappe.auth.get_logged_user</strong> is not whitelisted.</details>
+2026-03-26 08:33:19,151 INFO [__main__] Main window launched; analysis log file: /home/himanshu/Desktop/Projects/work-tracker/data/logs/work_tracker.log
+2026-03-26 08:33:19,442 INFO [services.auth_service] Performing preflight GET to initialize session cookies...
+2026-03-26 08:33:20,065 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "GET / HTTP/1.1" 200 None
+2026-03-26 08:33:20,379 DEBUG [urllib3.connectionpool] https://matrix.samta.ai:443 "POST /login HTTP/1.1" 200 70
