@@ -1,0 +1,25 @@
+data/logs/work_tracker.log
+  6f2a6f73f4b2c30e 112-745
+src/ui/views/sidebar_view.py
+  6f2a6f73f4b2c30e 2-90,93-95,99,103-105,108,111-116,118-120,122,124-127,129-170,173-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "31fb155bdaf2ab9b0417d4f8e60c4053c4fc07ff",
+  "prompts": {
+    "6f2a6f73f4b2c30e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d2806-78c3-7be1-8803-1283a4032b5d",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 1507,
+      "total_deletions": 798,
+      "accepted_lines": 808,
+      "overriden_lines": 0
+    }
+  }
+}
