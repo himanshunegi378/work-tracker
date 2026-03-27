@@ -232,7 +232,10 @@ def resolve_new_time_log_window(
     if previous_dt is not None and previous_dt.date() == current_dt.date():
         if current_dt < previous_dt:
             raise TimesheetServiceError("New smart-log time cannot be earlier than the previous row end time.")
-        return previous_dt, current_dt, compute_hours(previous_dt, current_dt)
+        from_dt = coerce_to_non_overlapping_second(previous_dt)
+        if current_dt < from_dt:
+            raise TimesheetServiceError("New smart-log time cannot overlap the previous row after rounding.")
+        return from_dt, current_dt, compute_hours(from_dt, current_dt)
 
     from_dt = current_dt - interval_delta(interval_seconds)
     return from_dt, current_dt, interval_hours
@@ -255,6 +258,8 @@ def build_time_log_row(
     formatted_current = format_doc_datetime(current_dt, include_microseconds=True)
     return {
         "name": f"new-time-log-{int(time.time() * 1000)}",
+        "__islocal": 1,
+        "__unsaved": 1,
         "owner": owner,
         "creation": formatted_current,
         "modified": formatted_current,
@@ -382,6 +387,13 @@ def coerce_optional_datetime(value: Optional[Any]) -> Optional[datetime]:
 def interval_delta(interval_seconds: int) -> timedelta:
     """Return a timedelta for the configured smart-log interval."""
     return timedelta(seconds=interval_seconds)
+
+
+def coerce_to_non_overlapping_second(value: datetime) -> datetime:
+    """Round up to the next whole second when microseconds would cause an overlap."""
+    if value.microsecond == 0:
+        return value
+    return value.replace(microsecond=0) + timedelta(seconds=1)
 
 
 def compute_hours(from_dt: datetime, to_dt: datetime) -> float:

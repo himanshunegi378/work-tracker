@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
         self.timesheet_service = timesheet_service
         self._smart_log_fetch_in_flight = False
         self._smart_log_save_in_flight = False
-        self._smart_log_interval_seconds = 10
+        self._smart_log_interval_seconds = 60 * 15 # 15 minutes
 
         # 1. Initialize Background Scheduler
         self.scheduler = CronScheduler(tick_interval=5.0)

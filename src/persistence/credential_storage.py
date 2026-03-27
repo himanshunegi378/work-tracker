@@ -1,48 +1,58 @@
-import json
+import keyring
 from typing import Dict, Optional
-from pathlib import Path
 
 class CredentialStorage:
-    """Persist remembered login credentials for the auto-login flow."""
+    """Persist remembered login credentials in the system keychain."""
 
-    def __init__(self, file_path: str = "data/credentials.json"):
-        """Choose the backing file used to store saved credentials."""
-        self.file_path = Path(file_path)
+    def __init__(self, service_name: str = "work-tracker"):
+        """Initialize with the service name used for keyring entries."""
+        self.service_name = service_name
+        self._username_key = "saved_username"
     
     def save_credentials(self, credentials: Dict[str, str]) -> bool:
-        """Write the current username and password payload to disk."""
+        """Store the username and password in the system keychain."""
         try:
-            # Ensure directory exists
-            self.file_path.parent.mkdir(parents=True, exist_ok=True)
+            username = credentials.get("username")
+            password = credentials.get("password")
             
-            with open(self.file_path, 'w', encoding='utf-8') as f:
-                json.dump(credentials, f, indent=4)
+            if not username or not password:
+                return False
+                
+            # Store the username under a static key so we can find it later
+            keyring.set_password(self.service_name, self._username_key, username)
+            # Store the password using the username as the key
+            keyring.set_password(self.service_name, username, password)
+            
             return True
-        except IOError as e:
-            print(f"Error saving credentials to {self.file_path}: {e}")
+        except Exception as e:
+            print(f"Error saving credentials to keyring: {e}")
             return False
 
     def load_credentials(self) -> Optional[Dict[str, str]]:
-        """Load saved credentials when the file exists and has the expected shape."""
-        if not self.file_path.exists():
-            return None
-            
+        """Retrieve saved credentials from the system keychain."""
         try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if isinstance(data, dict) and 'username' in data and 'password' in data:
-                    return data
+            username = keyring.get_password(self.service_name, self._username_key)
+            if not username:
                 return None
-        except (json.JSONDecodeError, IOError):
-            print(f"Error loading credentials from {self.file_path}")
+                
+            password = keyring.get_password(self.service_name, username)
+            if password:
+                return {"username": username, "password": password}
+            
+            return None
+        except Exception as e:
+            print(f"Error loading credentials from keyring: {e}")
             return None
             
     def clear_credentials(self) -> bool:
-        """Delete any saved credential file from disk."""
+        """Remove saved credentials from the system keychain."""
         try:
-            if self.file_path.exists():
-                self.file_path.unlink()
+            username = keyring.get_password(self.service_name, self._username_key)
+            if username:
+                keyring.delete_password(self.service_name, username)
+            
+            keyring.delete_password(self.service_name, self._username_key)
             return True
-        except IOError as e:
-            print(f"Error clearing credentials from {self.file_path}: {e}")
+        except Exception as e:
+            print(f"Error clearing credentials from keyring: {e}")
             return False
