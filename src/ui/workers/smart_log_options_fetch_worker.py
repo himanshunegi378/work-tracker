@@ -4,13 +4,13 @@ smart_log_options_fetch_worker.py
 Background worker that fetches smart-log context for SmartLogDialog.
 """
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
-from services.project_service import ProjectService
-from services.activity_service import ActivityService
-from services.timesheet_service import TimesheetService
+from src.services.activity_service import ActivityService
+from src.services.project_service import ProjectService
+from src.services.timesheet_service import TimesheetService
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 class _SmartLogOptionsFetchSignals(QObject):
     """Thread-safe signal carrier for smart-log option fetches."""
 
-    result_ready = Signal(list, list, dict, str)
+    # Updated signal to include recent items list: 
+    # (project_options, activity_names, smart_defaults, status_message, recent_options)
+    result_ready = Signal(list, list, dict, str, list)
 
 
 class SmartLogOptionsFetchWorker(QRunnable):
@@ -48,6 +50,7 @@ class SmartLogOptionsFetchWorker(QRunnable):
         project_options: List[Dict[str, str]] = []
         activity_names: List[str] = []
         smart_defaults: Optional[Dict[str, object]] = None
+        recent_options: List[Dict[str, Any]] = []
         status_parts: List[str] = []
 
         try:
@@ -78,9 +81,18 @@ class SmartLogOptionsFetchWorker(QRunnable):
             logger.exception("Failed to fetch latest smart log state")
             status_parts.append(f"Latest timesheet context is unavailable right now: {exc}")
 
+        try:
+            # Fetch the last 5 unique project/activity pairs for the "Recent" items section
+            recent_options = self.timesheet_service.get_recent_smart_log_options(limit=5)
+        except Exception as exc:
+            logger.exception("Failed to fetch recent smart log options")
+            # We don't necessarily need to block the UI for missing history
+            logger.warning("Continuing without recent items history due to fetch error.")
+
         self.signals.result_ready.emit(
             project_options,
             activity_names,
             smart_defaults or {},
             "\n".join(status_parts),
+            recent_options,
         )

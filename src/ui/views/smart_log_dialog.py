@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QLineEdit,
@@ -29,13 +29,17 @@ class SmartLogDialog(QDialog):
         smart_defaults: Optional[Dict[str, object]] = None,
         parent=None,
         activity_status_message: Optional[str] = None,
+        recent_options: Optional[List[Dict[str, Any]]] = None,
+        is_initial: bool = False,
     ):
         super().__init__(parent)
         self._project_options = project_options
         self._activity_names = activity_names
         self._smart_defaults = smart_defaults or {}
+        self._recent_options = recent_options or []
+        self._is_initial = is_initial
         self._activity_status_message = activity_status_message
-        self.setWindowTitle("Log Your Progress")
+        self.setWindowTitle("Start Your Next Task" if is_initial else "Log Your Progress")
         self.setMinimumWidth(350)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
@@ -54,17 +58,25 @@ class SmartLogDialog(QDialog):
 
         form = QFormLayout()
 
-        # Project selection — populated from the pre-fetched list
+        # Project selection
         self.project_cb = QComboBox()
-        for option in self._project_options:
-            self.project_cb.addItem(option["name"], option["id"])
-        if not self._project_options:
-            self.project_cb.addItem("(no projects loaded)")
+        self.project_cb.setEditable(True)
+        self.project_cb.setInsertPolicy(QComboBox.NoInsert)
+        self.project_cb.setPlaceholderText("Select or search project…")
+        
+        self._project_model = QStandardItemModel(self.project_cb)
+        self.project_cb.setModel(self._project_model)
+        self._set_project_options(self._project_options)
+        
+        self.project_cb.lineEdit().textEdited.connect(self._filter_projects)
+        self.project_cb.lineEdit().selectionChanged.connect(self._show_all_projects)
+        self.project_cb.lineEdit().setClearButtonEnabled(True)
 
         # Log description
         self.desc_input = QLineEdit()
         self.desc_input.setPlaceholderText("Task description…")
 
+        # Activity selection
         self.activity_cb = QComboBox()
         self.activity_cb.setEditable(True)
         self.activity_cb.setInsertPolicy(QComboBox.NoInsert)
@@ -74,6 +86,7 @@ class SmartLogDialog(QDialog):
         self._activity_model = QStandardItemModel(self.activity_cb)
         self._set_activity_options(self._activity_names)
         self.activity_cb.setModel(self._activity_model)
+        
         self.activity_cb.lineEdit().textEdited.connect(self._filter_activities)
         self.activity_cb.lineEdit().selectionChanged.connect(self._show_all_activities)
         self.activity_cb.lineEdit().setClearButtonEnabled(True)
@@ -85,6 +98,10 @@ class SmartLogDialog(QDialog):
         form.addRow("Doing:",   self.desc_input)
         form.addRow("", self.billable_cb)
         layout.addLayout(form)
+
+        # Connect project selection to advance focus if activity is empty
+        self.project_cb.currentIndexChanged.connect(self._on_project_changed)
+        self.activity_cb.currentIndexChanged.connect(self._on_activity_changed)
 
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
@@ -105,7 +122,7 @@ class SmartLogDialog(QDialog):
         cancel_btn = QPushButton("Skip")
         cancel_btn.clicked.connect(self.reject)
 
-        self.save_btn = QPushButton("Log Activity")
+        self.save_btn = QPushButton("Start Working" if self._is_initial else "Log Activity")
         self.save_btn.setDefault(True)
         self.save_btn.setStyleSheet("""
             QPushButton {
@@ -144,16 +161,86 @@ class SmartLogDialog(QDialog):
 
             self.desc_input.setText(description)
             self.billable_cb.setChecked(bool(self._smart_defaults.get("is_billable")))
+            
+            # If we have a description, focus that for quick editing/saving
             self.desc_input.selectAll()
             self.desc_input.setFocus()
         elif self._activity_names:
             self.activity_cb.lineEdit().setText("")
             self.billable_cb.setChecked(False)
 
+    def _set_project_options(self, project_options: List[Dict[str, str]]) -> None:
+        self._project_model.clear()
+        
+        # Add Recent Projects if available
+        recent_projects = []
+        seen_ids = set()
+        for opt in self._recent_options:
+            p_id = opt.get("project_id")
+            p_name = opt.get("project_name")
+            if p_id and p_name and p_id not in seen_ids:
+                recent_projects.append({"id": p_id, "name": p_name})
+                seen_ids.add(p_id)
+
+        if recent_projects:
+            header = QStandardItem("RECENT")
+            header.setFlags(Qt.NoItemFlags)
+            header.setData("header", Qt.UserRole)
+            self._project_model.appendRow(header)
+            for proj in recent_projects:
+                item = QStandardItem(proj["name"])
+                item.setData(proj["id"], Qt.UserRole + 1)
+                self._project_model.appendRow(item)
+            
+            self._project_model.appendRow(QStandardItem("")) # Separator
+
+        # Add all projects
+        if project_options:
+            for opt in project_options:
+                item = QStandardItem(opt["name"])
+                item.setData(opt["id"], Qt.UserRole + 1)
+                self._project_model.appendRow(item)
+        else:
+            self._project_model.appendRow(QStandardItem("(no projects loaded)"))
+
     def _set_activity_options(self, activity_names: List[str]) -> None:
         self._activity_model.clear()
+        
+        # Add Recent Activities
+        recent_activities = []
+        seen_names = set()
+        for opt in self._recent_options:
+            name = opt.get("activity_name")
+            if name and name not in seen_names:
+                recent_activities.append(name)
+                seen_names.add(name)
+
+        if recent_activities:
+            header = QStandardItem("RECENT")
+            header.setFlags(Qt.NoItemFlags)
+            header.setData("header", Qt.UserRole)
+            self._activity_model.appendRow(header)
+            for name in recent_activities:
+                self._activity_model.appendRow(QStandardItem(name))
+            
+            self._activity_model.appendRow(QStandardItem("")) # Separator
+
         for name in activity_names:
             self._activity_model.appendRow(QStandardItem(name))
+
+    def _show_all_projects(self) -> None:
+        if self.project_cb.lineEdit().hasSelectedText():
+            return
+        self._set_project_options(self._project_options)
+
+    def _filter_projects(self, text: str) -> None:
+        query = text.strip().lower()
+        if not query:
+            self._set_project_options(self._project_options)
+        else:
+            filtered = [p for p in self._project_options if query in p["name"].lower()]
+            self._set_project_options(filtered)
+        self.project_cb.showPopup()
 
     def _show_all_activities(self) -> None:
         if self.activity_cb.lineEdit().hasSelectedText():
@@ -163,24 +250,63 @@ class SmartLogDialog(QDialog):
     def _filter_activities(self, text: str) -> None:
         query = text.strip().lower()
         if not query:
-            filtered = self._activity_names
+            self._set_activity_options(self._activity_names)
         else:
             filtered = [name for name in self._activity_names if query in name.lower()]
-        self._set_activity_options(filtered)
+            self._set_activity_options(filtered)
         self.activity_cb.showPopup()
+
+    def _on_project_changed(self, index: int) -> None:
+        """Advance focus to activity if project is selected and activity is empty."""
+        if index < 0:
+            return
+        
+        # Avoid advancing focus if we're just loading defaults
+        if not self.isVisible():
+            return
+
+        if not self.activity_cb.currentText().strip():
+            self.activity_cb.setFocus()
+            self.activity_cb.showPopup()
+
+    def _on_activity_changed(self, index: int) -> None:
+        """Advance focus to description if activity is selected and description is empty."""
+        if index < 0:
+            return
+            
+        if not self.isVisible():
+            return
+
+        # If we selected a recent item, we might want to pre-fill description/billable
+        data_item = self.activity_cb.model().item(index)
+        if data_item:
+            # Check if this name exists in recent_options to pull more context
+            name = data_item.text()
+            for opt in self._recent_options:
+                if opt.get("activity_name") == name:
+                    if not self.desc_input.text().strip():
+                        self.desc_input.setText(opt.get("description") or "")
+                    self.billable_cb.setChecked(opt.get("is_billable", False))
+                    break
+
+        if not self.desc_input.text().strip():
+            self.desc_input.setFocus()
 
     def _on_save(self) -> None:
         project = self.project_cb.currentText()
-        project_id = self.project_cb.currentData()
+        # Data is stored in UserRole + 1 for project IDs
+        project_id = self.project_cb.currentData(Qt.UserRole + 1)
         activity = self.activity_cb.currentText().strip()
         desc    = self.desc_input.text().strip()
+        
         if (
             not project
             or not project_id
             or not activity
             or not desc
-            or activity not in self._activity_names
+            or (activity not in self._activity_names and not any(o["activity_name"] == activity for o in self._recent_options))
             or project == "(no projects loaded)"
+            or project == "RECENT"
         ):
             return
         self._submission = {

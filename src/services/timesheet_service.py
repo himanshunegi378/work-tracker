@@ -147,6 +147,68 @@ class TimesheetService:
             logger.error("Failed to fetch latest smart-log state: %s", exc)
             raise TimesheetServiceError(f"Failed to fetch latest smart-log state: {exc}") from exc
 
+    def get_recent_smart_log_options(
+        self,
+        limit: int = 5,
+        employee: Optional[str] = None,
+        csrf_token: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return a list of unique recent project/activity pairs for UI history."""
+        employee_filter = employee or self.auth_service.getSession()
+        if not employee_filter:
+            return []
+
+        try:
+            # Fetch the latest 3 timesheet summaries to ensure we have enough history
+            summaries = self._fetch_timesheet_summaries(
+                filters=[["Timesheet", "employee", "=", employee_filter]],
+                start=0,
+                page_length=3,
+                csrf_token=csrf_token,
+                source="get_recent_smart_log_options",
+            )
+            
+            recent_options = []
+            seen_pairs = set()
+
+            for summary in summaries:
+                doc = self._get_raw_timesheet_doc(summary["name"], csrf_token=csrf_token)
+                time_logs = doc.get("time_logs") or []
+                
+                # Sort logs by time (descending) to get the most recent first
+                sorted_logs = sorted(
+                    time_logs,
+                    key=lambda x: x.get("to_time") or x.get("from_time") or "",
+                    reverse=True
+                )
+
+                for log in sorted_logs:
+                    project_id = log.get("project")
+                    project_name = log.get("project_name")
+                    activity = log.get("activity_type")
+                    
+                    if not project_id or not project_name or not activity:
+                        continue
+                        
+                    pair = (project_id, activity)
+                    if pair not in seen_pairs:
+                        seen_pairs.add(pair)
+                        recent_options.append({
+                            "project_id": str(project_id),
+                            "project_name": str(project_name),
+                            "activity_name": str(activity),
+                            "is_billable": bool(log.get("is_billable")),
+                            "description": str(log.get("description") or ""),
+                        })
+                        
+                        if len(recent_options) >= limit:
+                            return recent_options
+                            
+            return recent_options
+        except Exception as exc:
+            logger.error("Failed to fetch recent smart-log options: %s", exc)
+            return []
+
     def save_timesheet_log(
         self,
         project_id: str,
@@ -161,8 +223,8 @@ class TimesheetService:
         """Save one smart-log submission into today's timesheet."""
         if not project_id or not project_name or not activity or not description:
             raise TimesheetServiceError("Timesheet save requires project, activity, and description.")
-        if interval_seconds <= 0:
-            raise TimesheetServiceError("Timesheet save requires a positive smart-log interval.")
+        if interval_seconds < 0:
+            raise TimesheetServiceError("Timesheet save requires a non-negative smart-log interval.")
 
         employee = self.auth_service.getSession()
         if not employee:

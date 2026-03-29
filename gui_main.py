@@ -1,6 +1,7 @@
 import sys
 import os
 import logging
+from typing import Optional
 from logging.handlers import RotatingFileHandler
 from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtCore import QMetaObject, Qt, Slot, QThreadPool
@@ -77,6 +78,7 @@ class MainWindow(QMainWindow):
         self._smart_log_fetch_in_flight = False
         self._smart_log_save_in_flight = False
         self._smart_log_interval_seconds = 60 * 15 # 15 minutes
+        self._is_initial_prompt = False
 
         # 1. Initialize Background Scheduler
         self.scheduler = CronScheduler(tick_interval=5.0)
@@ -131,14 +133,17 @@ class MainWindow(QMainWindow):
     def _handle_tracker_toggle(self, start: bool):
         if start:
             # Trigger smart log prompt every 30 seconds for demonstration
+            self._is_initial_prompt = True # Flag to indicate the first prompt should be 0-duration
             self.scheduler.add_job(
                 name="Smart Log Prompt", 
                 task_func=self._trigger_gui_prompt, 
-                interval_seconds=self._smart_log_interval_seconds
+                interval_seconds=self._smart_log_interval_seconds,
+                invoke_on_start=True # This will call _trigger_gui_prompt immediately
             )
             self.scheduler.start()
         else:
             self.scheduler.stop()
+            self._is_initial_prompt = False
 
     def _trigger_gui_prompt(self):
         QMetaObject.invokeMethod(self, "show_log_prompt", Qt.QueuedConnection)
@@ -160,13 +165,14 @@ class MainWindow(QMainWindow):
         self._smart_log_fetch_in_flight = True
         QThreadPool.globalInstance().start(worker)
 
-    @Slot(list, list, dict, str)
+    @Slot(list, list, dict, str, list)
     def _on_smart_log_options_ready(
         self,
         project_options: list,
         activity_names: list,
         smart_defaults: dict,
         activity_status_message: str,
+        recent_options: list,
     ):
         """Displays SmartLogDialog after background options fetch completes."""
         self._smart_log_fetch_in_flight = False
@@ -177,6 +183,8 @@ class MainWindow(QMainWindow):
             smart_defaults=smart_defaults,
             parent=None,
             activity_status_message=activity_status_message or None,
+            recent_options=recent_options,
+            is_initial=self._is_initial_prompt,
         )
 
         from PySide6.QtGui import QGuiApplication
@@ -188,10 +196,14 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             submission = dialog.get_submission()
             if submission:
-                self._save_smart_log_submission(submission)
+                interval = 0 if self._is_initial_prompt else self._smart_log_interval_seconds
+                self._save_smart_log_submission(submission, interval_seconds=interval)
+        
+        # Reset the flag after the prompt is dealt with (either saved or skipped)
+        self._is_initial_prompt = False
         self._refresh_dashboard()
 
-    def _save_smart_log_submission(self, submission: dict) -> None:
+    def _save_smart_log_submission(self, submission: dict, interval_seconds: Optional[int] = None) -> None:
         """Persist the accepted smart-log payload to today's timesheet."""
         if self._smart_log_save_in_flight:
             return
@@ -199,7 +211,7 @@ class MainWindow(QMainWindow):
         worker = SmartLogSaveWorker(
             service=self.timesheet_service,
             payload=submission,
-            interval_seconds=self._smart_log_interval_seconds,
+            interval_seconds=interval_seconds if interval_seconds is not None else self._smart_log_interval_seconds,
         )
         worker.signals.result_ready.connect(self._on_smart_log_saved)
         worker.signals.error_occurred.connect(self._on_smart_log_save_error)
@@ -210,7 +222,8 @@ class MainWindow(QMainWindow):
     def _on_smart_log_saved(self, detail: dict):
         """Refresh the timesheets module after one smart-log save succeeds."""
         self._smart_log_save_in_flight = False
-        if self.container.sidebar.timesheet_btn.property("active") == "true":
+        timesheet_item = self.container.sidebar.items.get("timesheets")
+        if timesheet_item and timesheet_item.property("active") == "true":
             self.timesheet_presenter.refresh()
 
     @Slot(str)
@@ -228,7 +241,6 @@ class MainWindow(QMainWindow):
 def main():
     if not os.path.exists("data"):
         os.makedirs("data")
-
     log_path = configure_logging()
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
