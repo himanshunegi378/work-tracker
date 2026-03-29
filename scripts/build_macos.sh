@@ -13,4 +13,4 @@ fi
 "$VENV_DIR/bin/python" -m pip install -r requirements.txt pyinstaller
 "$VENV_DIR/bin/python" -m PyInstaller --noconfirm --clean work_tracker.spec
 
-echo "macOS bundle ready in: $ROOT_DIR/dist/WorkTracker"
+echo "macOS app bundle ready in: $ROOT_DIR/dist/WorkTracker.app"

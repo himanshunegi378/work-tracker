@@ -49,14 +49,8 @@ exe = EXE(
 )
 
 if sys.platform == "darwin":
-    app = BUNDLE(
-        exe,
-        name="WorkTracker.app",
-        icon=icon,
-        bundle_identifier="com.worktracker.app",
-    )
     coll = COLLECT(
-        app,
+        exe,
         a.binaries,
         a.zipfiles,
         a.datas,
@@ -64,6 +58,12 @@ if sys.platform == "darwin":
         upx=True,
         upx_exclude=[],
         name="WorkTracker",
+    )
+    app = BUNDLE(
+        coll,
+        name="WorkTracker.app",
+        icon=icon,
+        bundle_identifier="com.worktracker.app",
     )
 else:
     coll = COLLECT(

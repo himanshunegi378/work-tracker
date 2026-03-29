@@ -25,7 +25,9 @@ Each script bootstraps a repo-local `.venv`, installs runtime dependencies plus 
 - CI artifacts are unsigned in this phase; release publishing, signing, and notarization are out of scope.
 
 ## Output
-- PyInstaller output folder: `dist/WorkTracker`
+- Linux and Windows bundle folder: `dist/WorkTracker`
+- macOS app bundle: `dist/WorkTracker.app`
+- macOS support folder: `dist/WorkTracker/`
 - Intermediate build folder: `build/`
 
 ## Runtime Storage
