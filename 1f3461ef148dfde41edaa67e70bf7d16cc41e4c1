@@ -1,0 +1,57 @@
+src/services/timesheet_service.py
+  ea1f3e943bbc75c1 150-211,226-227
+src/ui/workers/smart_log_options_fetch_worker.py
+  4937b46dbcbfe232 7,11-13
+  ea1f3e943bbc75c1 21-23,53,84-91,97
+src/ui/views/smart_log_dialog.py
+  ea1f3e943bbc75c1 1,32-33,39-40,42,61,63-73,79,89,102-105,125,164-165,172-204,208-227,231-243,253,256,259-293,297-298,301,307,309
+gui_main.py
+  a27b4e7f2598e548 4
+  ea1f3e943bbc75c1 81,136,140-141,146,168,175,186-187,199-203,206,214,225-226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.20",
+  "base_commit_sha": "1f3461ef148dfde41edaa67e70bf7d16cc41e4c1",
+  "prompts": {
+    "4937b46dbcbfe232": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d38b8-603e-7e71-bb99-b6026c5af74d",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 34,
+      "accepted_lines": 4,
+      "overriden_lines": 6
+    },
+    "a27b4e7f2598e548": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d38b6-2818-7a33-ba08-c59cec5fa465",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "ea1f3e943bbc75c1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d38b6-2a7d-7f60-8e4e-135917a62aff",
+        "model": "unknown"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 233,
+      "total_deletions": 21,
+      "accepted_lines": 233,
+      "overriden_lines": 0
+    }
+  }
+}
