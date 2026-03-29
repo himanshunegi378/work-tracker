@@ -22,8 +22,9 @@ Each script bootstraps a repo-local `.venv`, installs runtime dependencies plus 
   - `worktracker-windows` as `worktracker-windows.zip`
   - `worktracker-macos` as `worktracker-macos.zip`
 - Artifacts are available from the GitHub Actions run summary page for each successful workflow run.
-- Latest downloadable builds are also published to `artifacts/desktop/` on the `main` branch.
-- The tracked `artifacts/desktop/` folder is refreshed on each successful push to `main`.
+- Latest downloadable builds are also published to `artifacts/desktop/` on the dedicated `artifacts` branch.
+- The `artifacts` branch is created automatically on the first successful publish if it does not already exist.
+- The tracked `artifacts/desktop/` folder on that branch is refreshed on each successful push to `main`.
 - CI artifacts are unsigned in this phase; release publishing, signing, and notarization are out of scope.
 
 ## Output
