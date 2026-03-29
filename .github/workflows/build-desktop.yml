@@ -7,6 +7,10 @@ on:
     paths-ignore:
       - artifacts/desktop/**
 
+concurrency:
+  group: build-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -149,6 +153,18 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Prepare artifacts branch
+        shell: bash
+        run: |
+          if git ls-remote --exit-code --heads origin artifacts; then
+            git fetch origin artifacts
+            git switch --force-create artifacts --track origin/artifacts
+          else
+            git switch --orphan artifacts
+            git rm -rf . >/dev/null 2>&1 || true
+            git clean -fdx
+          fi
+
       - name: Download Ubuntu artifact
         uses: actions/download-artifact@v4
         with:
@@ -171,9 +187,27 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts/desktop
+          rm -f artifacts/desktop/worktracker-ubuntu.tar.gz
+          rm -f artifacts/desktop/worktracker-windows.zip
+          rm -f artifacts/desktop/worktracker-macos.zip
           cp tmp-artifacts/ubuntu/worktracker-ubuntu.tar.gz artifacts/desktop/worktracker-ubuntu.tar.gz
           cp tmp-artifacts/windows/worktracker-windows.zip artifacts/desktop/worktracker-windows.zip
           cp tmp-artifacts/macos/worktracker-macos.zip artifacts/desktop/worktracker-macos.zip
+          cat <<'EOF' > artifacts/desktop/README.md
+          # Desktop Downloads
+
+          This folder contains the latest successful desktop build archives published from the `main` branch CI workflow onto the `artifacts` branch.
+
+          ## Files
+          - `worktracker-ubuntu.tar.gz`: Latest Ubuntu desktop bundle
+          - `worktracker-windows.zip`: Latest Windows desktop bundle
+          - `worktracker-macos.zip`: Latest macOS app bundle archive
+
+          ## Notes
+          - These files are replaced on each successful push to `main`.
+          - GitHub Actions run artifacts are still available from the workflow run summary page.
+          - macOS builds are unsigned in this setup.
+          EOF
 
       - name: Commit published artifacts
         shell: bash
@@ -188,4 +222,4 @@ jobs:
           fi
 
           git commit -m "chore: publish latest desktop artifacts [skip ci]"
-          git push origin main
+          git push origin artifacts
