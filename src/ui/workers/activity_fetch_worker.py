@@ -16,7 +16,7 @@ from typing import List, Dict, Any, Optional
 
 from PySide6.QtCore import QRunnable, QObject, Signal, Slot
 
-from services.activity_service import ActivityService, ActivityServiceError
+from src.services.activity_service import ActivityService, ActivityServiceError
 
 logger = logging.getLogger(__name__)
 

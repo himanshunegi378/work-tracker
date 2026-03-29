@@ -1,5 +1,5 @@
-from services.project_manager import ProjectManager
-from services.log_manager import LogManager
+from src.services.log_manager import LogManager
+from src.services.project_manager import ProjectManager
 
 class CLIPromptHandler:
     def __init__(self, project_manager: ProjectManager, log_manager: LogManager):

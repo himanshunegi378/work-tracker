@@ -1,5 +1,5 @@
-from ui.contracts import ProjectAddViewInterface
-from services.project_manager import ProjectManager
+from src.services.project_manager import ProjectManager
+from src.ui.contracts import ProjectAddViewInterface
 
 # ---------------------------------------------------------------------------
 # DEPRECATED: ProjectAddPresenter is no longer used by the GUI.

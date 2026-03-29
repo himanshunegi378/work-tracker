@@ -19,10 +19,10 @@ from typing import List, Optional
 
 from PySide6.QtCore import QObject, Slot, QThreadPool
 
-from ui.views.activity_list_view import ActivityListView
-from services.activity_service import ActivityService
-from ui.workers.activity_fetch_worker import ActivityFetchWorker
-from ui.workers.activity_selection_fetch_worker import ActivitySelectionFetchWorker
+from src.services.activity_service import ActivityService
+from src.ui.views.activity_list_view import ActivityListView
+from src.ui.workers.activity_fetch_worker import ActivityFetchWorker
+from src.ui.workers.activity_selection_fetch_worker import ActivitySelectionFetchWorker
 
 logger = logging.getLogger(__name__)
 

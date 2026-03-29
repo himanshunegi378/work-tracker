@@ -1,8 +1,8 @@
 from dataclasses import asdict
 from datetime import datetime
 from typing import List, Optional
-from models.log import Log
-from persistence.storage import StorageInterface
+from src.models.log import Log
+from src.persistence.storage import StorageInterface
 
 class LogManager:
     """Manage locally stored activity logs for the legacy offline flow."""

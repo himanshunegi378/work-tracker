@@ -10,14 +10,14 @@ Run:
     python -m pytest tests/test_activity_list_presenter.py -v
 """
 import sys
-import os
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, call
 
 # Make src importable
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from services.activity_service import ActivityService, ActivityServiceError
+from src.services.activity_service import ActivityService, ActivityServiceError
 
 
 class TestActivityListPresenter(unittest.TestCase):
@@ -26,7 +26,7 @@ class TestActivityListPresenter(unittest.TestCase):
     def _make_presenter(self, activities=None, raise_error=False):
         """Helper: build a Presenter with mocked View and Service."""
         # Import here so PySide6 import errors surface clearly
-        from ui.activity_list_presenter import ActivityListPresenter
+        from src.ui.activity_list_presenter import ActivityListPresenter
 
         mock_view = MagicMock()
         # fetch_requested is a Signal — we replace it with a plain MagicMock

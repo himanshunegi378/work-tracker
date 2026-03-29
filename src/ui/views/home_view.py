@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui.views.project_card_view import ProjectCard
+from src.ui.views.project_card_view import ProjectCard
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QStackedWidget
 )
-from ui.views.sidebar_view import SidebarView
-from ui.views.dashboard_view import DashboardView
-from ui.views.home_view import HomeView
-from ui.views.settings_view import SettingsView
-from ui.views.activity_list_view import ActivityListView
-from ui.views.timesheet_module_view import TimesheetModuleView
+from src.ui.views.activity_list_view import ActivityListView
+from src.ui.views.dashboard_view import DashboardView
+from src.ui.views.home_view import HomeView
+from src.ui.views.settings_view import SettingsView
+from src.ui.views.sidebar_view import SidebarView
+from src.ui.views.timesheet_module_view import TimesheetModuleView
 
 class MainContainer(QWidget):
     """The root container orchestrating the sidebar and stacked content area."""

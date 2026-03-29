@@ -1,6 +1,6 @@
 from PySide6.QtCore import QObject, Slot
-from ui.views.settings_view import SettingsView
-from services.auth_service import AuthService
+from src.services.auth_service import AuthService
+from src.ui.views.settings_view import SettingsView
 from PySide6.QtCore import QTimer
 
 class SettingsPresenter(QObject):

@@ -1,14 +1,15 @@
 import os
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PySide6.QtWidgets import QApplication
 
-from ui.views.smart_log_dialog import SmartLogDialog
+from src.ui.views.smart_log_dialog import SmartLogDialog
 
 
 class TestSmartLogDialog(unittest.TestCase):

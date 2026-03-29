@@ -20,9 +20,9 @@ from typing import List
 
 from PySide6.QtCore import QObject, QThreadPool, Slot
 
-from ui.views.home_view import HomeView
-from services.project_service import ProjectService
-from ui.workers.project_fetch_worker import ProjectFetchWorker
+from src.services.project_service import ProjectService
+from src.ui.views.home_view import HomeView
+from src.ui.workers.project_fetch_worker import ProjectFetchWorker
 
 logger = logging.getLogger(__name__)
 

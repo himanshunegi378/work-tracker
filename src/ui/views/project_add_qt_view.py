@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLineEdit, 
     QTextEdit, QComboBox, QPushButton, QLabel, QMessageBox
 )
-from ui.contracts import ProjectAddViewInterface
+from src.ui.contracts import ProjectAddViewInterface
 from typing import Dict, Any
 
 class ProjectAddQtView(QWidget, ProjectAddViewInterface):

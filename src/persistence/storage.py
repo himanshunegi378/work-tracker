@@ -26,6 +26,7 @@ class JSONStorage(StorageInterface):
     def save(self, data: List[Any]):
         """Serialize the provided collection to disk as formatted JSON."""
         try:
+            self.file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4)
         except IOError as e:

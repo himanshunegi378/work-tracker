@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QScrollArea, QFrame
 )
 from PySide6.QtCore import Qt
-from models.log import Log
+from src.models.log import Log
 from typing import List
 
 class LogView(QWidget):

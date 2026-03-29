@@ -1,24 +1,21 @@
 import time
-import sys
-import os
 
-# Add src to python path for modular imports
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-
-from services.project_manager import ProjectManager
-from services.log_manager import LogManager
-from services.scheduler import CronScheduler
-from persistence.storage import JSONStorage
-from ui.cli import CLIPromptHandler
+from src.persistence.storage import JSONStorage
+from src.runtime_paths import ensure_runtime_dirs, logs_file_path, projects_file_path
+from src.services.log_manager import LogManager
+from src.services.project_manager import ProjectManager
+from src.services.scheduler import CronScheduler
+from src.ui.cli import CLIPromptHandler
 
 def backup_status():
     """A dummy secondary job for demonstration."""
     print("📋 [Background Task] Running data integrity check... OK.")
 
 def main():
+    ensure_runtime_dirs()
     # 1. Initialize storage
-    p_storage = JSONStorage("data/projects.json")
-    l_storage = JSONStorage("data/logs.json")
+    p_storage = JSONStorage(str(projects_file_path()))
+    l_storage = JSONStorage(str(logs_file_path()))
     
     p_manager = ProjectManager(p_storage)
     l_manager = LogManager(l_storage)

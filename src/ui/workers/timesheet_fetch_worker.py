@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QRunnable, QObject, Signal, Slot
 
-from services.timesheet_service import TimesheetService, TimesheetServiceError
+from src.services.timesheet_service import TimesheetService, TimesheetServiceError
 
 logger = logging.getLogger(__name__)
 

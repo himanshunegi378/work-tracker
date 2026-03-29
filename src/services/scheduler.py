@@ -1,7 +1,7 @@
 import time
 import threading
 from typing import List, Callable, Optional
-from models.job import Job
+from src.models.job import Job
 
 class CronScheduler:
     """Run named jobs on independent intervals from a shared heartbeat thread."""

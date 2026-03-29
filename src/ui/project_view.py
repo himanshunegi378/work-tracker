@@ -2,8 +2,8 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, 
     QLabel, QMessageBox
 )
-from ui.form_builder import DynamicForm
-from services.project_manager import ProjectManager
+from src.services.project_manager import ProjectManager
+from src.ui.form_builder import DynamicForm
 
 class ProjectView(QMainWindow):
     """

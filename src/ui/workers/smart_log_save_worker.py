@@ -8,7 +8,7 @@ from typing import Dict
 
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
-from services.timesheet_service import TimesheetService, TimesheetServiceError
+from src.services.timesheet_service import TimesheetService, TimesheetServiceError
 
 logger = logging.getLogger(__name__)
 

@@ -5,8 +5,8 @@ Container view for list/detail navigation within the Timesheets module.
 """
 from PySide6.QtWidgets import QStackedWidget, QVBoxLayout, QWidget
 
-from ui.views.timesheet_detail_view import TimesheetDetailView
-from ui.views.timesheet_list_view import TimesheetListView
+from src.ui.views.timesheet_detail_view import TimesheetDetailView
+from src.ui.views.timesheet_list_view import TimesheetListView
 
 
 class TimesheetModuleView(QWidget):

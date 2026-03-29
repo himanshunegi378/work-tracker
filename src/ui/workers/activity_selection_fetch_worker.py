@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
-from services.activity_service import ActivityService, ActivityServiceError
+from src.services.activity_service import ActivityService, ActivityServiceError
 
 logger = logging.getLogger(__name__)
 

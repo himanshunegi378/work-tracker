@@ -7,9 +7,9 @@ import logging
 
 from PySide6.QtCore import QObject, Slot, QThreadPool
 
-from services.timesheet_service import TimesheetService
-from ui.views.timesheet_detail_view import TimesheetDetailView
-from ui.workers.timesheet_detail_fetch_worker import TimesheetDetailFetchWorker
+from src.services.timesheet_service import TimesheetService
+from src.ui.views.timesheet_detail_view import TimesheetDetailView
+from src.ui.workers.timesheet_detail_fetch_worker import TimesheetDetailFetchWorker
 
 logger = logging.getLogger(__name__)
 

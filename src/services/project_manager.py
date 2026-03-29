@@ -1,7 +1,7 @@
 from dataclasses import asdict
 from typing import List
-from models.project import Project
-from persistence.storage import StorageInterface
+from src.models.project import Project
+from src.persistence.storage import StorageInterface
 
 # ---------------------------------------------------------------------------
 # DEPRECATED: ProjectManager is a local JSON-backed store used by the CLI.

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
-from services.project_service import ProjectService, ProjectServiceError
+from src.services.project_service import ProjectService, ProjectServiceError
 
 logger = logging.getLogger(__name__)
 

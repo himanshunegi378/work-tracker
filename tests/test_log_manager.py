@@ -1,10 +1,10 @@
-import os
 import sys
 import unittest
+from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from services.log_manager import LogManager
+from src.services.log_manager import LogManager
 
 
 class MemoryStorage:

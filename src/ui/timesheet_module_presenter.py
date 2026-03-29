@@ -5,10 +5,10 @@ Coordinates the timesheet list and detail subviews inside the Timesheets module.
 """
 from PySide6.QtCore import QObject, Slot
 
-from services.timesheet_service import TimesheetService
-from ui.timesheet_detail_presenter import TimesheetDetailPresenter
-from ui.timesheet_list_presenter import TimesheetListPresenter
-from ui.views.timesheet_module_view import TimesheetModuleView
+from src.services.timesheet_service import TimesheetService
+from src.ui.timesheet_detail_presenter import TimesheetDetailPresenter
+from src.ui.timesheet_list_presenter import TimesheetListPresenter
+from src.ui.views.timesheet_module_view import TimesheetModuleView
 
 
 class TimesheetModulePresenter(QObject):

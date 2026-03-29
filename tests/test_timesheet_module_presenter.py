@@ -1,16 +1,16 @@
-import os
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from services.timesheet_service import TimesheetService
+from src.services.timesheet_service import TimesheetService
 
 
 class TestTimesheetModulePresenter(unittest.TestCase):
     def _make_presenter(self):
-        from ui.timesheet_module_presenter import TimesheetModulePresenter
+        from src.ui.timesheet_module_presenter import TimesheetModulePresenter
 
         mock_view = MagicMock()
         mock_view.list_view = MagicMock()
