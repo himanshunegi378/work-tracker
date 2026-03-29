@@ -4,12 +4,15 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - artifacts/desktop/**
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     name: ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -132,3 +135,57 @@ jobs:
           path: ${{ matrix.archive_name }}
           if-no-files-found: error
           retention-days: 14
+
+  publish-artifacts:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    name: Publish Latest Artifacts
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download Ubuntu artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: worktracker-ubuntu
+          path: tmp-artifacts/ubuntu
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: worktracker-windows
+          path: tmp-artifacts/windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: worktracker-macos
+          path: tmp-artifacts/macos
+
+      - name: Update tracked artifact folder
+        shell: bash
+        run: |
+          mkdir -p artifacts/desktop
+          cp tmp-artifacts/ubuntu/worktracker-ubuntu.tar.gz artifacts/desktop/worktracker-ubuntu.tar.gz
+          cp tmp-artifacts/windows/worktracker-windows.zip artifacts/desktop/worktracker-windows.zip
+          cp tmp-artifacts/macos/worktracker-macos.zip artifacts/desktop/worktracker-macos.zip
+
+      - name: Commit published artifacts
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/desktop
+
+          if git diff --cached --quiet; then
+            echo "No artifact changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: publish latest desktop artifacts [skip ci]"
+          git push origin main
