@@ -1,0 +1,23 @@
+.github/workflows/build-desktop.yml
+  4937b46dbcbfe232 45-57,64,70-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "a6af7c4630d02d94429885996b776b9cad82a97d",
+  "prompts": {
+    "4937b46dbcbfe232": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d38b8-603e-7e71-bb99-b6026c5af74d",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Himanshu Singh Negi <himanshunegi378@gmail.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 3,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    }
+  }
+}
