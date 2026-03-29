@@ -20,43 +20,16 @@ jobs:
             os: ubuntu-latest
             artifact_name: worktracker-ubuntu
             archive_name: worktracker-ubuntu.tar.gz
-            test_shell: bash
-            test_command: |
-              python -m venv .venv
-              .venv/bin/python -m pip install -r requirements.txt pyinstaller
-              QT_QPA_PLATFORM=offscreen .venv/bin/python -m unittest discover -s tests
-            build_shell: bash
-            build_command: bash scripts/build_linux.sh
-            archive_shell: bash
-            archive_command: tar -czf worktracker-ubuntu.tar.gz -C dist WorkTracker
 
           - label: Windows
             os: windows-latest
             artifact_name: worktracker-windows
             archive_name: worktracker-windows.zip
-            test_shell: pwsh
-            test_command: |
-              python -m venv .venv
-              .\.venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller
-              .\.venv\Scripts\python.exe -m unittest discover -s tests
-            build_shell: pwsh
-            build_command: powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1
-            archive_shell: pwsh
-            archive_command: Compress-Archive -Path dist\WorkTracker -DestinationPath worktracker-windows.zip -Force
 
           - label: macOS
             os: macos-latest
             artifact_name: worktracker-macos
             archive_name: worktracker-macos.zip
-            test_shell: bash
-            test_command: |
-              python -m venv .venv
-              .venv/bin/python -m pip install -r requirements.txt pyinstaller
-              QT_QPA_PLATFORM=offscreen .venv/bin/python -m unittest discover -s tests
-            build_shell: bash
-            build_command: bash scripts/build_macos.sh
-            archive_shell: bash
-            archive_command: ditto -c -k --sequesterRsrc --keepParent dist/WorkTracker worktracker-macos.zip
 
     steps:
       - name: Check out repository
@@ -69,17 +42,51 @@ jobs:
           cache: pip
           cache-dependency-path: requirements.txt
 
-      - name: Run test suite
-        shell: ${{ matrix.test_shell }}
-        run: ${{ matrix.test_command }}
+      - name: Run test suite on Linux and macOS
+        if: ${{ runner.os != 'Windows' }}
+        shell: bash
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt pyinstaller
+          QT_QPA_PLATFORM=offscreen .venv/bin/python -m unittest discover -s tests
 
-      - name: Build desktop bundle
-        shell: ${{ matrix.build_shell }}
-        run: ${{ matrix.build_command }}
+      - name: Run test suite on Windows
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller
+          .\.venv\Scripts\python.exe -m unittest discover -s tests
 
-      - name: Archive bundle
-        shell: ${{ matrix.archive_shell }}
-        run: ${{ matrix.archive_command }}
+      - name: Build desktop bundle on Ubuntu
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: bash scripts/build_linux.sh
+
+      - name: Build desktop bundle on Windows
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1
+
+      - name: Build desktop bundle on macOS
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: bash scripts/build_macos.sh
+
+      - name: Archive Ubuntu bundle
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: tar -czf worktracker-ubuntu.tar.gz -C dist WorkTracker
+
+      - name: Archive Windows bundle
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: Compress-Archive -Path dist\WorkTracker -DestinationPath worktracker-windows.zip -Force
+
+      - name: Archive macOS bundle
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: ditto -c -k --sequesterRsrc --keepParent dist/WorkTracker worktracker-macos.zip
 
       - name: Upload build artifact
         if: ${{ success() }}
