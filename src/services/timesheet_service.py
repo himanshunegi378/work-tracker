@@ -18,6 +18,9 @@ from src.services.timesheet_smart_log import (
     build_new_timesheet_doc,
     build_smart_log_state_from_doc,
     coerce_datetime,
+    find_time_log_by_name,
+    is_placeholder_time_log,
+    should_merge_with_previous,
 )
 
 logger = logging.getLogger(__name__)
@@ -253,6 +256,14 @@ class TimesheetService:
                 employee=employee,
                 is_new_doc=is_new_doc,
             )
+            save_debug_context = self._build_smart_log_save_debug_context(
+                timesheet_doc=timesheet_doc,
+                previous_state=previous_state,
+                project_id=project_id,
+                activity=activity,
+                description=description,
+                is_billable=is_billable,
+            )
 
             try:
                 response = self._post_timesheet_doc(timesheet_doc, csrf_token=csrf_token)
@@ -280,11 +291,21 @@ class TimesheetService:
                         employee=employee,
                         is_new_doc=False,
                     )
+                    save_debug_context = self._build_smart_log_save_debug_context(
+                        timesheet_doc=retry_doc,
+                        previous_state=refreshed_state,
+                        project_id=project_id,
+                        activity=activity,
+                        description=description,
+                        is_billable=is_billable,
+                    )
                     response = self._post_timesheet_doc(retry_doc, csrf_token=csrf_token)
                 else:
+                    self._log_overlap_debug_context(exc, save_debug_context)
                     raise
             return self._normalize_timesheet_detail_response(response.json())
         except ApiClientError as exc:
+            self._log_overlap_debug_context(exc, save_debug_context if "save_debug_context" in locals() else None)
             logger.error("Failed to save timesheet log: %s", exc)
             raise TimesheetServiceError(f"Failed to save timesheet log: {exc}") from exc
 
@@ -497,6 +518,67 @@ class TimesheetService:
                 include_form_content_type=True,
                 include_doctype_header=False,
             ),
+        )
+
+    def _build_smart_log_save_debug_context(
+        self,
+        timesheet_doc: Dict[str, Any],
+        previous_state: Optional[Dict[str, Any]],
+        project_id: str,
+        activity: str,
+        description: str,
+        is_billable: bool,
+    ) -> Dict[str, Any]:
+        """Return compact diagnostics about the row being persisted."""
+        merge_expected = should_merge_with_previous(
+            previous_state=previous_state,
+            timesheet_name=timesheet_doc.get("name"),
+            project_id=project_id,
+            activity=activity,
+            description=description,
+            is_billable=is_billable,
+        )
+        target_row = None
+        if merge_expected and previous_state:
+            target_row = find_time_log_by_name(
+                timesheet_doc.get("time_logs") or [],
+                previous_state.get("row_name"),
+            )
+        if target_row is None:
+            time_logs = timesheet_doc.get("time_logs") or []
+            if time_logs:
+                target_row = time_logs[-1]
+
+        mode = "merge"
+        if target_row is not None and is_placeholder_time_log(target_row):
+            mode = "placeholder"
+        elif not merge_expected:
+            mode = "append"
+
+        return {
+            "mode": mode,
+            "timesheet_name": timesheet_doc.get("name"),
+            "row_name": target_row.get("name") if isinstance(target_row, dict) else None,
+            "from_time": target_row.get("from_time") if isinstance(target_row, dict) else None,
+            "to_time": target_row.get("to_time") if isinstance(target_row, dict) else None,
+        }
+
+    def _log_overlap_debug_context(
+        self,
+        exc: ApiClientError,
+        debug_context: Optional[Dict[str, Any]],
+    ) -> None:
+        """Log extra context when the server rejects a row for overlap."""
+        if exc.exc_type != "OverlapError" or not debug_context:
+            return
+
+        logger.error(
+            "OverlapError while saving smart log: mode=%s timesheet=%s row=%s window=%s -> %s",
+            debug_context.get("mode"),
+            debug_context.get("timesheet_name"),
+            debug_context.get("row_name"),
+            debug_context.get("from_time"),
+            debug_context.get("to_time"),
         )
 
     # Date/time and request formatting helpers

@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from src.api import ApiClientError
 from src.services.timesheet_service import TimesheetService, TimesheetServiceError
+from src.services.timesheet_smart_log import resolve_new_time_log_window
 
 
 class FakeResponse:
@@ -303,9 +304,9 @@ class TestTimesheetService(unittest.TestCase):
         payload = dict(item.split("=", 1) for item in kwargs["data"].split("&"))
         doc = json.loads(urllib_unquote(payload["doc"]))
         self.assertEqual(len(doc["time_logs"]), 1)
-        self.assertEqual(doc["time_logs"][0]["from_time"], "2026-03-25 09:30:00")
+        self.assertEqual(doc["time_logs"][0]["from_time"], "2026-03-25 09:30:01")
         self.assertEqual(doc["time_logs"][0]["to_time"], "2026-03-25 09:45:00")
-        self.assertEqual(doc["time_logs"][0]["hours"], 0.25)
+        self.assertEqual(doc["time_logs"][0]["hours"], 0.249722)
 
     def test_save_timesheet_log_uses_interval_for_first_record_of_day(self):
         service, api_client, auth_service = self._make_service()
@@ -627,10 +628,246 @@ class TestTimesheetService(unittest.TestCase):
         payload = dict(item.split("=", 1) for item in kwargs["data"].split("&"))
         doc = json.loads(urllib_unquote(payload["doc"]))
         self.assertEqual(len(doc["time_logs"]), 2)
-        self.assertEqual(doc["time_logs"][1]["from_time"], "2026-03-25 09:30:00")
+        self.assertEqual(doc["time_logs"][1]["from_time"], "2026-03-25 09:30:01")
         self.assertEqual(doc["time_logs"][1]["to_time"], "2026-03-25 09:45:00")
-        self.assertEqual(doc["time_logs"][1]["hours"], 0.25)
+        self.assertEqual(doc["time_logs"][1]["hours"], 0.249722)
         self.assertEqual(doc["time_logs"][1]["billing_hours"], 0.0)
+
+    def test_save_timesheet_log_creates_zero_duration_placeholder_for_initial_prompt(self):
+        service, api_client, auth_service = self._make_service()
+        api_client.post.return_value = FakeResponse(
+            {
+                "docs": [
+                    {
+                        "name": "TS-TODAY",
+                        "workflow_state": "Pending",
+                        "status": "Draft",
+                        "title": "User",
+                        "employee": "user@example.com",
+                        "employee_name": "User",
+                        "department": "Tech",
+                        "company": "Samta",
+                        "currency": "INR",
+                        "start_date": "2026-03-25",
+                        "end_date": "2026-03-25",
+                        "total_hours": 0,
+                        "total_billable_hours": 0,
+                        "total_billable_amount": 0,
+                        "total_billed_amount": 0,
+                        "total_costing_amount": 0,
+                        "time_logs": [],
+                    }
+                ]
+            }
+        )
+        service.get_latest_smart_log_state = MagicMock(return_value=None)
+        service._get_or_prepare_timesheet_for_day = MagicMock(
+            return_value=(
+                {
+                    "name": "TS-TODAY",
+                    "owner": "user@example.com",
+                    "modified": "2026-03-25 19:34:17.275100",
+                    "modified_by": "user@example.com",
+                    "workflow_state": "Pending",
+                    "status": "Draft",
+                    "time_logs": [],
+                },
+                False,
+            )
+        )
+
+        with patch("src.services.timesheet_service.time.time", return_value=1700000000):
+            service.save_timesheet_log(
+                project_id="PROJ-0010",
+                project_name="IDGI",
+                activity="Execution",
+                description="Worked on feature",
+                is_billable=True,
+                interval_seconds=0,
+                saved_at="2026-03-25 09:45:00",
+            )
+
+        _, kwargs = api_client.post.call_args
+        payload = dict(item.split("=", 1) for item in kwargs["data"].split("&"))
+        doc = json.loads(urllib_unquote(payload["doc"]))
+        self.assertEqual(len(doc["time_logs"]), 1)
+        self.assertEqual(doc["time_logs"][0]["from_time"], "2026-03-25 09:45:00")
+        self.assertEqual(doc["time_logs"][0]["to_time"], "2026-03-25 09:45:00")
+        self.assertEqual(doc["time_logs"][0]["hours"], 0.0)
+        self.assertEqual(doc["time_logs"][0]["billing_hours"], 0.0)
+
+    def test_save_timesheet_log_extends_matching_placeholder_row(self):
+        service, api_client, auth_service = self._make_service()
+        api_client.post.return_value = FakeResponse(
+            {
+                "docs": [
+                    {
+                        "name": "TS-TODAY",
+                        "workflow_state": "Pending",
+                        "status": "Draft",
+                        "title": "User",
+                        "employee": "user@example.com",
+                        "employee_name": "User",
+                        "department": "Tech",
+                        "company": "Samta",
+                        "currency": "INR",
+                        "start_date": "2026-03-25",
+                        "end_date": "2026-03-25",
+                        "total_hours": 0.25,
+                        "total_billable_hours": 0.25,
+                        "total_billable_amount": 0,
+                        "total_billed_amount": 0,
+                        "total_costing_amount": 0,
+                        "time_logs": [],
+                    }
+                ]
+            }
+        )
+        service.get_latest_smart_log_state = MagicMock(
+            return_value={
+                "timesheet_name": "TS-TODAY",
+                "row_name": "prev-row",
+                "project_id": "PROJ-0010",
+                "project_name": "IDGI",
+                "activity_name": "Execution",
+                "description": "Worked on feature",
+                "is_billable": True,
+                "timestamp": "2026-03-25 09:45:00",
+            }
+        )
+        service._get_or_prepare_timesheet_for_day = MagicMock(
+            return_value=(
+                {
+                    "name": "TS-TODAY",
+                    "owner": "user@example.com",
+                    "modified": "2026-03-25 19:34:17.275100",
+                    "modified_by": "user@example.com",
+                    "workflow_state": "Pending",
+                    "status": "Draft",
+                    "time_logs": [
+                        {
+                            "name": "prev-row",
+                            "from_time": "2026-03-25 09:45:00",
+                            "to_time": "2026-03-25 09:45:00",
+                            "hours": 0.0,
+                            "billing_hours": 0.0,
+                            "project": "PROJ-0010",
+                            "project_name": "IDGI",
+                            "activity_type": "Execution",
+                            "description": "Worked on feature",
+                            "is_billable": 1,
+                        }
+                    ],
+                },
+                False,
+            )
+        )
+
+        with patch("src.services.timesheet_service.time.time", return_value=1700000000):
+            service.save_timesheet_log(
+                project_id="PROJ-0010",
+                project_name="IDGI",
+                activity="Execution",
+                description="Worked on feature",
+                is_billable=True,
+                interval_seconds=900,
+                saved_at="2026-03-25 10:00:00",
+            )
+
+        _, kwargs = api_client.post.call_args
+        payload = dict(item.split("=", 1) for item in kwargs["data"].split("&"))
+        doc = json.loads(urllib_unquote(payload["doc"]))
+        self.assertEqual(len(doc["time_logs"]), 1)
+        self.assertEqual(doc["time_logs"][0]["from_time"], "2026-03-25 09:45:00")
+        self.assertEqual(doc["time_logs"][0]["to_time"], "2026-03-25 10:00:00")
+        self.assertEqual(doc["time_logs"][0]["hours"], 0.25)
+        self.assertEqual(doc["time_logs"][0]["billing_hours"], 0.25)
+
+    def test_save_timesheet_log_appends_after_non_matching_placeholder_row(self):
+        service, api_client, auth_service = self._make_service()
+        api_client.post.return_value = FakeResponse(
+            {
+                "docs": [
+                    {
+                        "name": "TS-TODAY",
+                        "workflow_state": "Pending",
+                        "status": "Draft",
+                        "title": "User",
+                        "employee": "user@example.com",
+                        "employee_name": "User",
+                        "department": "Tech",
+                        "company": "Samta",
+                        "currency": "INR",
+                        "start_date": "2026-03-25",
+                        "end_date": "2026-03-25",
+                        "total_hours": 0.249722,
+                        "total_billable_hours": 0.249722,
+                        "total_billable_amount": 0,
+                        "total_billed_amount": 0,
+                        "total_costing_amount": 0,
+                        "time_logs": [],
+                    }
+                ]
+            }
+        )
+        service.get_latest_smart_log_state = MagicMock(
+            return_value={
+                "timesheet_name": "TS-TODAY",
+                "row_name": "prev-row",
+                "project_id": "PROJ-0010",
+                "project_name": "IDGI",
+                "activity_name": "Execution",
+                "description": "Worked on feature",
+                "is_billable": True,
+                "timestamp": "2026-03-25 09:45:00",
+            }
+        )
+        service._get_or_prepare_timesheet_for_day = MagicMock(
+            return_value=(
+                {
+                    "name": "TS-TODAY",
+                    "owner": "user@example.com",
+                    "modified": "2026-03-25 19:34:17.275100",
+                    "modified_by": "user@example.com",
+                    "workflow_state": "Pending",
+                    "status": "Draft",
+                    "time_logs": [
+                        {
+                            "name": "prev-row",
+                            "from_time": "2026-03-25 09:45:00",
+                            "to_time": "2026-03-25 09:45:00",
+                            "hours": 0.0,
+                            "billing_hours": 0.0,
+                            "project": "PROJ-0010",
+                            "project_name": "IDGI",
+                            "activity_type": "Execution",
+                            "description": "Worked on feature",
+                            "is_billable": 1,
+                        }
+                    ],
+                },
+                False,
+            )
+        )
+
+        with patch("src.services.timesheet_service.time.time", return_value=1700000000):
+            service.save_timesheet_log(
+                project_id="PROJ-0020",
+                project_name="OCS",
+                activity="Review",
+                description="Reviewed changes",
+                is_billable=True,
+                interval_seconds=900,
+                saved_at="2026-03-25 10:00:00",
+            )
+
+        _, kwargs = api_client.post.call_args
+        payload = dict(item.split("=", 1) for item in kwargs["data"].split("&"))
+        doc = json.loads(urllib_unquote(payload["doc"]))
+        self.assertEqual(len(doc["time_logs"]), 2)
+        self.assertEqual(doc["time_logs"][1]["from_time"], "2026-03-25 09:45:01")
+        self.assertEqual(doc["time_logs"][1]["to_time"], "2026-03-25 10:00:00")
+        self.assertEqual(doc["time_logs"][1]["hours"], 0.249722)
 
     def test_save_timesheet_log_retries_once_after_timestamp_mismatch(self):
         service, api_client, auth_service = self._make_service()
@@ -745,11 +982,29 @@ class TestTimesheetService(unittest.TestCase):
         self.assertIn("ValidationError", str(ctx.exception))
         self.assertIn("Activity Type is required", str(ctx.exception))
 
+    def test_resolve_new_time_log_window_uses_strictly_later_second_for_same_second_boundary(self):
+        from_dt, to_dt, hours = resolve_new_time_log_window(
+            previous_dt=service_datetime("2026-03-25 09:30:00"),
+            current_dt=service_datetime("2026-03-25 09:45:00"),
+            interval_seconds=900,
+            interval_hours=0.25,
+        )
+
+        self.assertEqual(str(from_dt), "2026-03-25 09:30:01")
+        self.assertEqual(str(to_dt), "2026-03-25 09:45:00")
+        self.assertEqual(hours, 0.249722)
+
 
 def urllib_unquote(value: str) -> str:
     from urllib.parse import unquote_plus
 
     return unquote_plus(value)
+
+
+def service_datetime(value: str):
+    from datetime import datetime
+
+    return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
 
 
 if __name__ == "__main__":

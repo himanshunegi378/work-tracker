@@ -62,6 +62,7 @@ class SettingsPresenter(QObject):
             
             self.view.username_input.clear()
             self.view.password_input.clear()
+            self.view.show_password_checkbox.setChecked(False)
             self.view.show_success("Credentials explicitly cleared.")
         except Exception as e:
             self.view.show_error(f"Failed to clear credentials: {str(e)}")

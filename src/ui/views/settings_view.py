@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QLineEdit, QPushButton, 
-    QFrame, QMessageBox
+    QFrame, QMessageBox, QCheckBox
 )
 from PySide6.QtCore import Qt, Signal
 
@@ -74,6 +74,18 @@ class SettingsView(QWidget):
         """)
         cred_layout.addWidget(self.password_input)
         
+        # Show Password Checkbox
+        self.show_password_checkbox = QCheckBox("Show Password")
+        self.show_password_checkbox.setStyleSheet("""
+            QCheckBox {
+                font-size: 13px;
+                color: #555;
+                border: none;
+            }
+        """)
+        self.show_password_checkbox.stateChanged.connect(self._on_show_password_changed)
+        cred_layout.addWidget(self.show_password_checkbox)
+
         # Action Buttons
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
@@ -130,12 +142,19 @@ class SettingsView(QWidget):
     def _on_clear_clicked(self):
         self.clear_credentials_requested.emit()
         
+    def _on_show_password_changed(self, state):
+        if self.show_password_checkbox.isChecked():
+            self.password_input.setEchoMode(QLineEdit.Normal)
+        else:
+            self.password_input.setEchoMode(QLineEdit.Password)
+
     def set_loading(self, is_loading: bool):
         """Updates the UI state while an operation is occurring."""
         self.save_btn.setEnabled(not is_loading)
         self.save_btn.setText("Saving..." if is_loading else "Save Credentials")
         self.username_input.setEnabled(not is_loading)
         self.password_input.setEnabled(not is_loading)
+        self.show_password_checkbox.setEnabled(not is_loading)
         
     def populate_credentials(self, username: str, password: str = ""):
         """Pre-fills the username and password fields."""

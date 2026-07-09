@@ -144,6 +144,19 @@ def should_merge_with_previous(
     )
 
 
+def is_placeholder_time_log(row: Optional[Dict[str, Any]]) -> bool:
+    """Return whether a time log row represents the initial zero-duration placeholder."""
+    if not isinstance(row, dict):
+        return False
+
+    from_time = row.get("from_time")
+    to_time = row.get("to_time")
+    if not from_time or not to_time or from_time != to_time:
+        return False
+
+    return float(row.get("hours") or 0.0) == 0.0
+
+
 def merge_into_existing_time_log(
     time_logs: List[Dict[str, Any]],
     previous_state: Optional[Dict[str, Any]],
@@ -229,10 +242,13 @@ def resolve_new_time_log_window(
     interval_hours: float,
 ) -> Tuple[datetime, datetime, float]:
     """Return the start, end, and hours for a new smart-log row."""
+    if interval_seconds == 0:
+        return current_dt, current_dt, 0.0
+
     if previous_dt is not None and previous_dt.date() == current_dt.date():
         if current_dt < previous_dt:
             raise TimesheetServiceError("New smart-log time cannot be earlier than the previous row end time.")
-        from_dt = coerce_to_non_overlapping_second(previous_dt)
+        from_dt = coerce_to_strictly_later_second(previous_dt)
         if current_dt < from_dt:
             raise TimesheetServiceError("New smart-log time cannot overlap the previous row after rounding.")
         return from_dt, current_dt, compute_hours(from_dt, current_dt)
@@ -389,10 +405,10 @@ def interval_delta(interval_seconds: int) -> timedelta:
     return timedelta(seconds=interval_seconds)
 
 
-def coerce_to_non_overlapping_second(value: datetime) -> datetime:
-    """Round up to the next whole second when microseconds would cause an overlap."""
+def coerce_to_strictly_later_second(value: datetime) -> datetime:
+    """Return the first whole-second timestamp strictly after the provided value."""
     if value.microsecond == 0:
-        return value
+        return value + timedelta(seconds=1)
     return value.replace(microsecond=0) + timedelta(seconds=1)
 
 
