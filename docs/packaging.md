@@ -31,6 +31,7 @@ Each script bootstraps a repo-local `.venv`, installs runtime dependencies plus 
 - `bash scripts/build_deb.sh [out_dir]` builds `work-tracker_<version>_<arch>.deb` from `dist/WorkTracker` (run `build_linux.sh` first). CI builds it as `worktracker-ubuntu.deb`.
 - Install or upgrade: `sudo apt install ./worktracker-ubuntu.deb` (installing a newer package over the old one upgrades it; no manual removal). Remove: `sudo apt remove work-tracker`.
 - Installs to `/opt/work-tracker`, links `samta-tracker` and `work-tracker` into `/usr/bin` (so the command works in any terminal with no `setup`), and adds a desktop-menu entry. The menu entry has no custom icon yet.
+- **glibc:** a PyInstaller bundle is not independent of glibc: it needs at least the glibc of the build machine. CI therefore builds on `ubuntu-22.04` (glibc 2.35), so the `.deb` runs on Ubuntu 22.04+ and Debian 12+. `build_deb.sh` reads the real requirement from the binaries, writes `Depends: libc6 (>= X)` (apt refuses an older system with a clear message) and fails the build if `MAX_GLIBC` is exceeded. To support older systems, build on an older distribution.
 - Per-user data (saved login in the keyring, settings, logs) lives outside the package and survives upgrades and removal.
 
 ## Output

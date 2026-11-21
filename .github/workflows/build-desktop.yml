@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - label: Ubuntu
-            os: ubuntu-latest
+            os: ubuntu-22.04   # old on purpose: the bundle needs at least the glibc of the machine that builds it
             artifact_name: worktracker-ubuntu
 
           - label: Windows
@@ -119,7 +119,7 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         shell: bash
         run: |
-          bash scripts/build_deb.sh .
+          MAX_GLIBC=2.35 bash scripts/build_deb.sh .
           mv work-tracker_*.deb worktracker-ubuntu.deb
 
       - name: Archive Windows bundle

@@ -34,6 +34,17 @@ Terminal=false
 Categories=Office;ProjectManagement;
 DESKTOP
 
+# The bundle is only self-contained up to glibc: it needs at least the glibc of the machine that built it
+# (PyInstaller copies some system libraries such as GTK/GLib). Find the newest GLIBC_x.y symbol any
+# bundled binary uses, and declare it so apt refuses a too-old system instead of failing at launch.
+GLIBC_MIN="$(find "$ROOT/opt" -type f \( -name '*.so*' -o -name WorkTracker -o -name samta-tracker \) -print0 \
+  | xargs -0 -n 50 objdump -T 2>/dev/null | grep -o 'GLIBC_[0-9][0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1)"
+GLIBC_MIN="${GLIBC_MIN:-2.28}"
+echo "Needs glibc >= $GLIBC_MIN"
+if [[ -n "${MAX_GLIBC:-}" ]] && [[ "$(printf '%s\n%s\n' "$GLIBC_MIN" "$MAX_GLIBC" | sort -V | tail -1)" != "$MAX_GLIBC" ]]; then
+  echo "ERROR: needs glibc $GLIBC_MIN but MAX_GLIBC=$MAX_GLIBC. Build on an older distribution." >&2; exit 1
+fi
+
 SIZE_KB="$(du -sk "$ROOT/opt" | cut -f1)"
 cat > "$ROOT/DEBIAN/control" <<CONTROL
 Package: work-tracker
@@ -42,7 +53,7 @@ Section: utils
 Priority: optional
 Architecture: $ARCH
 Installed-Size: $SIZE_KB
-Depends: libegl1, libgl1, libopengl0, libdbus-1-3, libxkbcommon-x11-0, libxcb-cursor0
+Depends: libc6 (>= $GLIBC_MIN), libegl1, libgl1, libopengl0, libdbus-1-3, libxkbcommon-x11-0, libxcb-cursor0
 Recommends: gnome-keyring | kwalletmanager
 Maintainer: Work Tracker <noreply@users.noreply.github.com>
 Homepage: https://github.com/himanshunegi378/work-tracker
