@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 
@@ -20,8 +21,10 @@ def test_version():
 def test_help():
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
+    # CI sets GITHUB_ACTIONS/FORCE_COLOR, which makes the help colored; compare the plain text.
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
     for flag in ("--json", "--no-color", "--quiet", "--yes"):
-        assert flag in result.output
+        assert flag in plain
 
 
 def test_short_help_flag():
