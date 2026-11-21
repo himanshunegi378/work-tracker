@@ -34,16 +34,32 @@ def root(
     ),
 ) -> None:
     ctx.obj = GlobalOptions(json_mode=json_mode, no_color=no_color, quiet=quiet, yes=yes)
+    _configure_cli_logging()
 
 
-def get_context(ctx: typer.Context):
-    """Build the shared AppContext lazily so `--help` stays instant."""
-    from src.core.app import build_app
+def _configure_cli_logging() -> None:
+    """Send library logs to a file so they never pollute stdout/stderr."""
+    try:
+        from src.core.logging_setup import configure_logging
+        from src.runtime_paths import user_log_dir
 
-    state = ctx.find_root().meta
-    if "app_ctx" not in state:
-        state["app_ctx"] = build_app()
-    return state["app_ctx"]
+        configure_logging(user_log_dir() / "cli.log")
+    except OSError:
+        import logging
+
+        logging.getLogger().addHandler(logging.NullHandler())  # still silence the last-resort handler
+
+
+def _register_commands() -> None:
+    from src.cli.commands import auth, config
+
+    app.command("login")(auth.login)
+    app.command("logout")(auth.logout)
+    app.add_typer(auth.auth_app, name="auth")
+    app.add_typer(config.config_app, name="config")
+
+
+_register_commands()
 
 
 def main() -> None:

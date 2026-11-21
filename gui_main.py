@@ -5,6 +5,7 @@ from typing import Optional
 from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtCore import QMetaObject, Qt, Slot, QThreadPool
 
+from src.core import prefs
 from src.core.app import build_app
 from src.core.logging_setup import configure_logging
 from src.runtime_paths import ensure_runtime_dirs
@@ -44,7 +45,7 @@ class MainWindow(QMainWindow):
         self.timesheet_service = timesheet_service
         self._smart_log_fetch_in_flight = False
         self._smart_log_save_in_flight = False
-        self._smart_log_interval_seconds = 60 * 15 # 15 minutes
+        self._smart_log_interval_seconds = prefs.get_interval_seconds()  # shared with `samta-tracker config`
         self._is_initial_prompt = False
 
         # 1. Initialize Background Scheduler

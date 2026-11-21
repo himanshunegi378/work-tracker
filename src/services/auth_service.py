@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 # Assuming ApiClient and ApiClientError are in src.api as created previously
 from src.api import ApiClient, ApiClientError
 from src.persistence.credential_storage import CredentialStorage
+from src.persistence.session_store import SessionStore
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +16,24 @@ class AuthenticationError(Exception):
 class AuthService:
     """Owns login state, session checks, and credential persistence."""
     
-    def __init__(self, api_client: ApiClient, credential_storage: Optional[CredentialStorage] = None):
+    def __init__(
+        self,
+        api_client: ApiClient,
+        credential_storage: Optional[CredentialStorage] = None,
+        auto_login_credentials: Optional[Dict[str, str]] = None,
+        session_store: Optional[SessionStore] = None,
+    ):
         """Configure auth endpoints and wire session recovery into the API client."""
         self.api_client = api_client
         self.storage = credential_storage or CredentialStorage()
         
-        # Load auto-login credentials from storage
-        self.auto_login_credentials = self.storage.load_credentials()
+        self.auto_login_credentials = auto_login_credentials or self.storage.load_credentials()
+        # Optional shared session (GUI and CLI reuse one server-side session)
+        self.session_store = session_store
+        if self.session_store:
+            saved = self.session_store.load(self.api_client.base_url)
+            if saved:
+                self.api_client.import_cookies(saved)
         self.login_endpoint = "/login"
         # Frappe default endpoint to check current logged-in user
         self.get_user_endpoint = "/api/method/frappe.auth.get_logged_user"
@@ -107,6 +119,8 @@ class AuthService:
                 self.auto_login_credentials = {"username": username, "password": password}
                 if self.storage:
                     self.storage.save_credentials(self.auto_login_credentials)
+                if self.session_store:
+                    self.session_store.save(self.api_client.base_url, self.api_client.export_cookies())
                 return True
                 
             return False
@@ -147,6 +161,8 @@ class AuthService:
     def logout(self) -> None:
         """Clear local session cookies and forget the current authenticated state."""
         self.api_client.clear_cookies()
+        if self.session_store:
+            self.session_store.clear(self.api_client.base_url)
         logger.info("User logged out locally.")
 
     def get_saved_username(self) -> Optional[str]:

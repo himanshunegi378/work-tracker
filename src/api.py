@@ -261,6 +261,27 @@ class ApiClient:
         """Returns the current cookies stored in the session."""
         return requests.utils.dict_from_cookiejar(self.session.cookies)
         
+    def export_cookies(self) -> list:
+        """Return the session cookies as plain dicts (for persistence)."""
+        return [
+            {
+                "name": c.name, "value": c.value, "domain": c.domain, "path": c.path,
+                "secure": c.secure, "expires": c.expires,
+            }
+            for c in self.session.cookies
+        ]
+
+    def import_cookies(self, cookies: list) -> None:
+        """Load cookies previously produced by `export_cookies`."""
+        for c in cookies or []:
+            try:
+                self.session.cookies.set(
+                    c["name"], c["value"], domain=c.get("domain") or "", path=c.get("path") or "/",
+                    secure=bool(c.get("secure")), expires=c.get("expires"),
+                )
+            except (KeyError, TypeError):
+                logger.warning("Skipping malformed saved cookie")
+
     def clear_cookies(self) -> None:
         """Clears all session cookies."""
         self.session.cookies.clear()

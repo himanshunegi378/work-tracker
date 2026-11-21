@@ -9,13 +9,15 @@ from dataclasses import dataclass
 from typing import Optional
 
 from src.api import ApiClient
+from src.core import prefs
 from src.persistence.credential_storage import CredentialStorage
+from src.persistence.session_store import SessionStore
 from src.services.activity_service import ActivityService
 from src.services.auth_service import AuthService
 from src.services.project_service import ProjectService
 from src.services.timesheet_service import TimesheetService
 
-DEFAULT_BASE_URL = "https://matrix.samta.ai"
+DEFAULT_BASE_URL = prefs.DEFAULT_BASE_URL
 
 
 @dataclass
@@ -28,11 +30,14 @@ class AppContext:
 
 
 def build_app(base_url: Optional[str] = None) -> AppContext:
-    """Construct the service graph. Makes no network calls."""
-    api_client = ApiClient(base_url=base_url or DEFAULT_BASE_URL)
+    """Construct the service graph. Makes no network calls.
+
+    The server URL comes from `base_url`, else the saved `url` preference.
+    """
+    api_client = ApiClient(base_url=base_url or prefs.get_url())
     # AuthService must be created before the other services: it installs
     # api_client.auth_provider so every request can recover its session.
-    auth = AuthService(api_client, CredentialStorage())
+    auth = AuthService(api_client, CredentialStorage(), session_store=SessionStore())
     return AppContext(
         api_client=api_client,
         auth=auth,

@@ -4,7 +4,15 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import pytest
+
+from src.core import prefs
 from src.core.app import DEFAULT_BASE_URL, AppContext, build_app
+
+
+@pytest.fixture(autouse=True)
+def isolated_prefs(tmp_path, monkeypatch):
+    monkeypatch.setattr(prefs, "prefs_path", lambda: tmp_path / "preferences.json")
 
 
 class _NoKeyring:
@@ -49,3 +57,9 @@ def test_base_url_default_and_override():
     assert _build().api_client.base_url.rstrip("/") == DEFAULT_BASE_URL
     custom = _build(base_url="https://example.test")
     assert custom.api_client.base_url.rstrip("/") == "https://example.test"
+
+
+def test_base_url_follows_saved_preference():
+    prefs.set_value("url", "https://saved.example")
+    assert _build().api_client.base_url == "https://saved.example"
+    assert _build(base_url="https://explicit.example").api_client.base_url == "https://explicit.example"

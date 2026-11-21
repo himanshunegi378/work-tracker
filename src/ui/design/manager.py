@@ -1,6 +1,5 @@
 """Runtime theme state: current theme, persistence, live switching, rebindable styles."""
 
-import json
 import logging
 import weakref
 from typing import Callable
@@ -14,14 +13,10 @@ from src.ui.design.tokens import DARK, LIGHT, THEMES, Theme
 logger = logging.getLogger(__name__)
 
 
-def _prefs_path():
-    from src.runtime_paths import user_data_dir
-    return user_data_dir() / "ui_prefs.json"
-
-
 def _load_saved_name() -> str:
     try:
-        return json.loads(_prefs_path().read_text(encoding="utf-8")).get("theme", "light")
+        from src.core import prefs
+        return prefs.get_theme()
     except Exception:
         return "light"
 
@@ -69,9 +64,8 @@ class ThemeManager(QObject):
 
     def _save(self, name: str) -> None:
         try:
-            path = _prefs_path()
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps({"theme": name}), encoding="utf-8")
+            from src.core import prefs
+            prefs.set_value("theme", name)
         except Exception:
             logger.exception("Could not persist theme preference")
 

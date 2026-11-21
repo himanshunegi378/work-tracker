@@ -26,7 +26,7 @@ Exit codes: `0` ok · `1` error · `2` bad usage · `3` not logged in · `4` GUI
 | Command | Flags | Notes |
 |---|---|---|
 | `samta-tracker login` (alias `auth login`) | `-u/--username`, `--password-stdin`, `--url` | Prompts for missing username and hidden password. Saved to the keyring, so the GUI is logged in too. |
-| `samta-tracker logout` | `--forget` | `--forget` also deletes saved credentials. |
+| `samta-tracker logout` | | Removes the saved credentials, same as "Clear Credentials" in the GUI. |
 | `samta-tracker auth status` | | Server, user, session valid or expired. |
 
 ### Read data
@@ -89,7 +89,7 @@ python gui_main.py            # or: work-tracker-gui
 
 ## Delivery plan
 0. **Foundation** (done): `src/core` (`build_app()` shared wiring, logging), `src/cli` skeleton (global flags, output helpers, exit codes), `pyproject.toml` with the `samta-tracker` entry point, GUI refactored onto the core, old CLI removed.
-1. **Auth and config**: `login`, `logout`, `auth status`, `config get|set` (url, theme, interval), shared preferences, session-cookie persistence.
+1. **Auth and config** (done): `login`, `logout`, `auth status`, `config get|set` (url, theme, interval), shared preferences file. The session cookies are stored in the OS keyring (`SessionStore`) so the GUI and the CLI share one server-side session; without a keyring each side logs in on its own.
 2. **Read commands**: `projects list|view`, `activities list`, `timesheets list|view|today`.
 3. **Log time**: `log add` (flags, prompts, `--recent`, `--duration`) and `log list`.
 4. **GUI tracker control**: single instance, local socket protocol, tray icon, `--hidden`, shared reminder interval.

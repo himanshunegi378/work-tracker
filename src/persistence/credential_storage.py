@@ -1,5 +1,10 @@
+import logging
+
 import keyring
 from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
+
 
 class CredentialStorage:
     """Persist remembered login credentials in the system keychain."""
@@ -25,7 +30,7 @@ class CredentialStorage:
             
             return True
         except Exception as e:
-            print(f"Error saving credentials to keyring: {e}")
+            logger.error("Error saving credentials to keyring: %s", e)
             return False
 
     def load_credentials(self) -> Optional[Dict[str, str]]:
@@ -41,7 +46,7 @@ class CredentialStorage:
             
             return None
         except Exception as e:
-            print(f"Error loading credentials from keyring: {e}")
+            logger.error("Error loading credentials from keyring: %s", e)
             return None
             
     def clear_credentials(self) -> bool:
@@ -54,5 +59,5 @@ class CredentialStorage:
             keyring.delete_password(self.service_name, self._username_key)
             return True
         except Exception as e:
-            print(f"Error clearing credentials from keyring: {e}")
+            logger.error("Error clearing credentials from keyring: %s", e)
             return False
