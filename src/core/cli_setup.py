@@ -14,6 +14,7 @@ from typing import List, Optional, Tuple
 
 COMMAND = "samta-tracker"
 SKILL_NAME = "samta-tracker"
+SKILL_INSTALL_COMMAND = "npx skills add himanshunegi378/work-tracker"  # skills.sh installer
 
 
 class SetupError(Exception):

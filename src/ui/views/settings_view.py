@@ -3,7 +3,12 @@ from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, 
     QFrame, QMessageBox, QCheckBox
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import QToolButton
+
+from src.core.cli_setup import SKILL_INSTALL_COMMAND
+from src.ui.icons import make_icon
 
 from src.ui.theme import COLORS, card_style
 from src.ui.design import SPACE, Card, bind_style, button, current as _t, label, manager, set_prop
@@ -15,7 +20,6 @@ class SettingsView(QWidget):
     save_credentials_requested = Signal(str, str) # username, password
     clear_credentials_requested = Signal()
     install_cli_requested = Signal()
-    install_skill_requested = Signal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -53,21 +57,21 @@ class SettingsView(QWidget):
         cli_card = Card()
         cli_card.body.addWidget(label("Command line and AI agents", "heading"))
         cli_card.body.addWidget(label(
-            "Use Work Tracker from any terminal as 'samta-tracker', and let AI agents such as "
-            "Claude Code control it.", "caption"))
+            "Use Work Tracker from any terminal as 'samta-tracker'.", "caption"))
         self.cli_status_label = label("", "caption")
         self.cli_status_label.setWordWrap(True)
         cli_card.body.addWidget(self.cli_status_label)
         cli_row = QHBoxLayout()
         cli_row.setSpacing(SPACE["sm"])
         self.install_cli_btn = button("Install command-line tool", "secondary")
-        self.install_skill_btn = button("Install agent skill", "secondary")
         self.install_cli_btn.clicked.connect(lambda _=False: self.install_cli_requested.emit())
-        self.install_skill_btn.clicked.connect(lambda _=False: self.install_skill_requested.emit())
         cli_row.addWidget(self.install_cli_btn)
-        cli_row.addWidget(self.install_skill_btn)
         cli_row.addStretch()
         cli_card.body.addLayout(cli_row)
+
+        cli_card.body.addWidget(label(
+            "To let AI agents (Claude Code and others) control Work Tracker, run this in a terminal:", "caption"))
+        cli_card.body.addWidget(self._build_copy_line(SKILL_INSTALL_COMMAND))
         self.layout.addWidget(cli_card)
 
         # Credentials Section Frame
@@ -166,12 +170,52 @@ class SettingsView(QWidget):
         self.layout.addWidget(cred_frame)
         self.layout.addStretch()
         
-    def set_cli_state(self, status_text: str, can_install_cli: bool, cli_label: str, skill_label: str):
-        """Shows whether the command line and agent skill are set up, and what the buttons will do."""
+    def _build_copy_line(self, command: str) -> QFrame:
+        """A code-style box with the command and a copy-to-clipboard icon."""
+        self._copy_text = command
+        box = QFrame()
+        box.setObjectName("copy_line")
+        bind_style(box, lambda: f"QFrame#copy_line {{ background-color: {_t().surface_alt}; border: 1px solid {_t().border}; border-radius: 6px; }}")
+        row = QHBoxLayout(box)
+        row.setContentsMargins(12, 6, 6, 6)
+        row.setSpacing(SPACE["sm"])
+        self.command_label = QLabel(command)
+        self.command_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        bind_style(self.command_label, lambda: f"font-family: monospace; font-size: 13px; color: {_t().text}; border: none; background: transparent;")
+        row.addWidget(self.command_label, 1)
+        self.copy_btn = QToolButton()
+        self.copy_btn.setToolTip("Copy to clipboard")
+        self.copy_btn.setCursor(Qt.PointingHandCursor)
+        self.copy_btn.setAutoRaise(True)
+        self.copy_btn.clicked.connect(lambda _=False: self.copy_command())
+        row.addWidget(self.copy_btn)
+        self._copied = False
+        manager.changed.connect(lambda _t_: self._sync_copy_icon())
+        self._sync_copy_icon()
+        return box
+
+    def _sync_copy_icon(self):
+        t = _t()
+        self.copy_btn.setIcon(make_icon("check" if self._copied else "copy", t.success if self._copied else t.text_secondary, 18))
+
+    def copy_command(self):
+        """Put the command on the clipboard and briefly show a tick."""
+        QGuiApplication.clipboard().setText(self._copy_text)
+        self._copied = True
+        self._sync_copy_icon()
+        self.copy_btn.setToolTip("Copied")
+        QTimer.singleShot(1500, self._reset_copy_icon)
+
+    def _reset_copy_icon(self):
+        self._copied = False
+        self.copy_btn.setToolTip("Copy to clipboard")
+        self._sync_copy_icon()
+
+    def set_cli_state(self, status_text: str, can_install_cli: bool, cli_label: str):
+        """Shows whether the terminal command is set up, and what the button will do."""
         self.cli_status_label.setText(status_text)
         self.install_cli_btn.setEnabled(can_install_cli)
         self.install_cli_btn.setText(cli_label)
-        self.install_skill_btn.setText(skill_label)
 
     def show_info(self, message: str):
         """Displays a neutral notification (used for setup results with extra instructions)."""

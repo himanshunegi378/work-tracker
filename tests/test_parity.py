@@ -38,7 +38,6 @@ OTHER_GUI_FEATURES = {
     "tray: start/stop tracker": ["start", "stop"],
     "settings: theme": ["config set"],
     "settings: install command-line tool": ["setup"],
-    "settings: install agent skill": ["install-skill"],
     # Timesheet Detail screen: row Edit/Delete buttons and Submit/Delete timesheet buttons
     "timesheet detail: edit entry": ["log edit"],
     "timesheet detail: delete entry": ["log rm"],
@@ -47,7 +46,7 @@ OTHER_GUI_FEATURES = {
 }
 
 # CLI commands with no GUI screen of their own (deliberate)
-CLI_ONLY = {"remind", "completion"}
+CLI_ONLY = {"remind", "completion", "install-skill"}
 
 
 def cli_commands():
@@ -118,7 +117,7 @@ def test_the_settings_screen_really_has_the_setup_buttons():
     from src.ui.views.settings_view import SettingsView
 
     view = SettingsView()
-    for attribute in ("install_cli_btn", "install_skill_btn"):
+    for attribute in ("install_cli_btn", "copy_btn"):
         assert hasattr(view, attribute), f"GUI action missing: {attribute}"
 
 

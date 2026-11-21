@@ -17,7 +17,6 @@ class SettingsPresenter(QObject):
         self.view.save_credentials_requested.connect(self.handle_save_credentials)
         self.view.clear_credentials_requested.connect(self.handle_clear_credentials)
         self.view.install_cli_requested.connect(self.handle_install_cli)
-        self.view.install_skill_requested.connect(self.handle_install_skill)
         self.refresh_cli_state()
         
         # Initial population of UI based on existing state
@@ -72,20 +71,17 @@ class SettingsPresenter(QObject):
             self.view.show_error(f"Failed to clear credentials: {str(e)}")
 
     def refresh_cli_state(self):
-        """Show whether the terminal command and the agent skill are already set up."""
+        """Show whether the terminal command is already set up."""
         exe = cli_setup.cli_executable()
         installed = cli_setup.is_installed()
-        skill = cli_setup.skill_status()
         if exe is None:
             text = "The command-line program was not found next to this app, so it cannot be installed from here."
         else:
-            text = ("Terminal command: " + ("installed" if installed else "not installed")
-                    + "  |  Agent skill: " + {"current": "installed", "outdated": "update available", "missing": "not installed"}[skill])
+            text = "Terminal command: " + ("installed" if installed else "not installed")
         self.view.set_cli_state(
             text,
             can_install_cli=exe is not None,
             cli_label="Command-line tool installed" if (exe is not None and installed) else "Install command-line tool",
-            skill_label={"current": "Agent skill installed", "outdated": "Update agent skill", "missing": "Install agent skill"}[skill],
         )
 
     @Slot()
@@ -104,14 +100,3 @@ class SettingsPresenter(QObject):
             self.view.show_info(message)
         self.refresh_cli_state()
 
-    @Slot()
-    def handle_install_skill(self):
-        """Install (or refresh) the agent skill for Claude Code."""
-        try:
-            status, path = cli_setup.install_skill(force=True)
-        except cli_setup.SetupError as exc:
-            self.view.show_error(str(exc))
-        else:
-            self.view.show_info(
-                f"Agent skill {status}:\n{path}\n\nRestart your agent (for example Claude Code) to pick it up.")
-        self.refresh_cli_state()

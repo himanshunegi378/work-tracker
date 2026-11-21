@@ -114,9 +114,21 @@ def test_settings_presenter_buttons_do_the_setup(fake_install):
     assert view.install_cli_btn.isEnabled() and "not installed" in view.cli_status_label.text()
 
     view.install_cli_btn.click()
-    view.install_skill_btn.click()
     assert (home / ".local/bin/samta-tracker").is_symlink()
-    assert (home / ".claude/skills/samta-tracker/SKILL.md").exists()
-    assert len(messages) == 2
+    assert not (home / ".claude").exists()  # the skill goes through skills.sh, not this screen
+    assert len(messages) == 1
     assert view.install_cli_btn.text() == "Command-line tool installed"
-    assert view.install_skill_btn.text() == "Agent skill installed"
+
+
+def test_settings_shows_the_skills_sh_command_and_copies_it():
+    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtWidgets import QApplication
+
+    QApplication.instance() or QApplication([])
+    from src.ui.views.settings_view import SettingsView
+
+    view = SettingsView()
+    assert view.command_label.text() == cli_setup.SKILL_INSTALL_COMMAND
+    view.copy_btn.click()
+    assert QGuiApplication.clipboard().text() == cli_setup.SKILL_INSTALL_COMMAND
+    assert view.copy_btn.toolTip() == "Copied"

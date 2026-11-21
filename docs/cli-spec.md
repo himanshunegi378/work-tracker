@@ -145,4 +145,4 @@ The downloaded archives are not installers, so `samta-tracker` is not on PATH at
 
 - Linux/macOS: links `~/.local/bin/samta-tracker` to the program (prints the PATH line to add if that folder is not on PATH). Windows: adds the program's folder to the user PATH (no admin rights). A new terminal is needed afterwards.
 - Also installs the agent skill (`--no-skill` to skip). `--undo` removes the PATH entry/link. Safe to repeat.
-- The desktop app does the same from Settings → "Command line and AI agents" (buttons "Install command-line tool" and "Install agent skill"), using the same code (`src/core/cli_setup.py`).
+- The desktop app does the same from Settings → "Command line and AI agents" (button "Install command-line tool"; the agent skill is installed with the skills.sh command shown there, `npx skills add himanshunegi378/work-tracker`, which has a copy-to-clipboard icon), using the same code (`src/core/cli_setup.py`).

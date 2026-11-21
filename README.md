@@ -28,7 +28,7 @@ Standalone bundles can be built with PyInstaller, see [docs/packaging.md](docs/p
 
 The downloadable archives are not installers, so `samta-tracker` is not on your PATH at first.
 Either open the app and go to **Settings → Command line and AI agents → Install command-line
-tool** (and **Install agent skill**), or run once from the unpacked folder:
+tool**, or run once from the unpacked folder:
 
 ```bash
 ./WorkTracker/samta-tracker setup          # Windows: .\WorkTracker\samta-tracker.exe setup
@@ -74,9 +74,11 @@ Full reference: [docs/cli-spec.md](docs/cli-spec.md).
 ## Use it from an AI agent
 
 ```bash
+npx skills add himanshunegi378/work-tracker      # skills.sh installer, many agents (needs Node)
+
+# no Node, or offline: copy the bundled skill instead
 samta-tracker install-skill                      # Claude Code: ~/.claude/skills/samta-tracker
 samta-tracker install-skill --dir <skills dir>   # another agent's skills folder
-npx skills add himanshunegi378/work-tracker      # skills.sh installer, many agents
 ```
 
 Then ask your agent things like "log 1h on <project> for code review" or "start the tracker".
