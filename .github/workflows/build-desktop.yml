@@ -4,6 +4,22 @@ on:
   push:
     branches:
       - main
+    # Only changes that can alter the built bundles trigger a build. Docs, README,
+    # skills/, tests/ and the root test_interceptor*.py scripts never ship in an
+    # artifact, so they are left out. (src/cli/skill/SKILL.md is under src/ and
+    # IS bundled via work_tracker.spec.)
+    paths:
+      - "src/**"
+      - "assets/**"
+      - "gui_main.py"
+      - "samta_tracker_cli.py"
+      - "work_tracker.spec"
+      - "requirements.txt"
+      - "pyproject.toml"
+      - "scripts/build_*"
+      - ".github/workflows/build-desktop.yml"
+  # Allow forcing a build (e.g. to refresh the "latest" release) without a code change.
+  workflow_dispatch:
 
 concurrency:
   group: build-desktop-${{ github.ref }}
