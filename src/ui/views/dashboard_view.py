@@ -56,6 +56,11 @@ class DashboardView(QWidget):
         self.tracker_toggle_requested.emit(self._is_tracking)
         self._update_ui_state()
 
+    def set_tracking(self, active: bool) -> None:
+        """Reflect the tracker state from outside (tray, CLI) without emitting the toggle signal."""
+        self._is_tracking = bool(active)
+        self._update_ui_state()
+
     def _update_ui_state(self):
         active = self._is_tracking
         self.tracker_title.setText("Work Tracker: ACTIVE" if active else "Work Tracker: INACTIVE")

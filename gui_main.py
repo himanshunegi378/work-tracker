@@ -1,20 +1,25 @@
+import argparse
+import os
 import sys
 import logging
 from pathlib import Path
 from typing import Optional
-from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtCore import QMetaObject, Qt, Slot, QThreadPool
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PySide6.QtCore import QTimer, Slot, QThreadPool
 
-from src.core import prefs
+from src.core import ipc, prefs
 from src.core.app import build_app
 from src.core.logging_setup import configure_logging
-from src.runtime_paths import ensure_runtime_dirs
+from src.runtime_paths import ensure_runtime_dirs, user_data_dir
 from src.services.activity_service import ActivityService
 from src.services.auth_service import AuthService
 from src.services.project_service import ProjectService
-from src.services.scheduler import CronScheduler
 from src.services.timesheet_service import TimesheetService
 from src.ui.design import apply_theme
+from src.ui.ipc_server import IpcServer
+from src.ui.single_instance import SingleInstance
+from src.ui.tracker_controller import TrackerController
+from src.ui.tray import TrayController
 from src.ui.activity_list_presenter import ActivityListPresenter
 from src.ui.home_presenter import HomePresenter
 from src.ui.settings_presenter import SettingsPresenter
@@ -45,11 +50,14 @@ class MainWindow(QMainWindow):
         self.timesheet_service = timesheet_service
         self._smart_log_fetch_in_flight = False
         self._smart_log_save_in_flight = False
-        self._smart_log_interval_seconds = prefs.get_interval_seconds()  # shared with `samta-tracker config`
-        self._is_initial_prompt = False
+        self._quitting = False
+        self._tray_notice_shown = False
 
-        # 1. Initialize Background Scheduler
-        self.scheduler = CronScheduler(tick_interval=5.0)
+        # 1. Reminder tracker (shared by the dashboard button, tray icon and CLI)
+        self.tracker = TrackerController(parent=self)
+        self.tracker.prompt_requested.connect(self.show_log_prompt)
+        self.tracker.state_changed.connect(self._on_tracker_state_changed)
+        self.tray: Optional[TrayController] = None
 
         # 2. Root Container
         self.container = MainContainer()
@@ -99,22 +107,88 @@ class MainWindow(QMainWindow):
     # --- Smart Tracker Logic ---
 
     def _handle_tracker_toggle(self, start: bool):
-        if start:
-            # Trigger smart log prompt every 30 seconds for demonstration
-            self._is_initial_prompt = True # Flag to indicate the first prompt should be 0-duration
-            self.scheduler.add_job(
-                name="Smart Log Prompt", 
-                task_func=self._trigger_gui_prompt, 
-                interval_seconds=self._smart_log_interval_seconds,
-                invoke_on_start=True # This will call _trigger_gui_prompt immediately
-            )
-            self.scheduler.start()
-        else:
-            self.scheduler.stop()
-            self._is_initial_prompt = False
+        """Dashboard button handler."""
+        try:
+            self.tracker.start() if start else self.tracker.stop()
+        except ValueError as exc:
+            QMessageBox.warning(self, "Tracker", str(exc))
 
-    def _trigger_gui_prompt(self):
-        QMetaObject.invokeMethod(self, "show_log_prompt", Qt.QueuedConnection)
+    def _on_tracker_state_changed(self, active: bool):
+        """Keep the dashboard button and tray menu in step with the real tracker state."""
+        self.container.dash_view.set_tracking(active)
+        if self.tray:
+            self.tray.set_tracking(active)
+
+    # --- Tray, window and CLI control ---
+
+    def setup_tray(self) -> bool:
+        """Create the tray icon when the desktop has one. Returns whether it is available."""
+        if not TrayController.available():
+            return False
+        self.tray = TrayController(self)
+        self.tray.open_requested.connect(self.show_window)
+        self.tray.toggle_tracker_requested.connect(
+            lambda: self.tracker.stop() if self.tracker.active else self.tracker.start()
+        )
+        self.tray.quit_requested.connect(self.quit_app)
+        self.tray.set_tracking(self.tracker.active)
+        self.tray.show()
+        return True
+
+    def show_window(self):
+        if self.isMinimized():
+            self.showNormal()
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    def quit_app(self):
+        self._quitting = True
+        self.tracker.stop()
+        if self.tray:
+            self.tray.hide()
+        QApplication.quit()
+
+    def handle_ipc(self, cmd: str, args: dict) -> dict:
+        """Run one CLI command. Called on the GUI thread by the IPC server."""
+        if cmd == "ping":
+            return {"pid": os.getpid()}
+        if cmd == "window.show":
+            self.show_window()
+            return {}
+        if cmd == "tracker.status":
+            return self.status()
+        if cmd == "tracker.start":
+            every = args.get("every")
+            if every is not None and (isinstance(every, bool) or not isinstance(every, int)):
+                raise ipc.IpcCommandError("'every' must be a whole number of seconds.")
+            try:
+                self.tracker.start(every)
+            except ValueError as exc:
+                raise ipc.IpcCommandError(str(exc)) from exc
+            return self.status()
+        if cmd == "tracker.stop":
+            self.tracker.stop()
+            return self.status()
+        if cmd == "data.refresh":
+            self._refresh_dashboard()
+            timesheet_item = self.container.sidebar.items.get("timesheets")
+            if timesheet_item and timesheet_item.property("active") == "true":
+                self.timesheet_presenter.refresh()
+            return {}
+        if cmd == "app.quit":
+            # reply first, then quit on the next event-loop turn
+            QTimer.singleShot(100, self.quit_app)
+            return {}
+        raise ipc.IpcCommandError(f"Unknown command '{cmd}'.")
+
+    def status(self) -> dict:
+        return {
+            "pid": os.getpid(),
+            "tracker": self.tracker.status(),
+            "window_visible": self.isVisible() and not self.isMinimized(),
+            "tray": self.tray is not None,
+        }
 
     @Slot()
     def show_log_prompt(self):
@@ -152,7 +226,7 @@ class MainWindow(QMainWindow):
             parent=None,
             activity_status_message=activity_status_message or None,
             recent_options=recent_options,
-            is_initial=self._is_initial_prompt,
+            is_initial=self.tracker.initial_prompt,
         )
 
         from PySide6.QtGui import QGuiApplication
@@ -164,11 +238,11 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             submission = dialog.get_submission()
             if submission:
-                interval = 0 if self._is_initial_prompt else self._smart_log_interval_seconds
+                interval = 0 if self.tracker.initial_prompt else self.tracker.interval_seconds
                 self._save_smart_log_submission(submission, interval_seconds=interval)
         
         # Reset the flag after the prompt is dealt with (either saved or skipped)
-        self._is_initial_prompt = False
+        self.tracker.initial_prompt = False
         self._refresh_dashboard()
 
     def _save_smart_log_submission(self, submission: dict, interval_seconds: Optional[int] = None) -> None:
@@ -179,7 +253,7 @@ class MainWindow(QMainWindow):
         worker = SmartLogSaveWorker(
             service=self.timesheet_service,
             payload=submission,
-            interval_seconds=interval_seconds if interval_seconds is not None else self._smart_log_interval_seconds,
+            interval_seconds=interval_seconds if interval_seconds is not None else self.tracker.interval_seconds,
         )
         worker.signals.result_ready.connect(self._on_smart_log_saved)
         worker.signals.error_occurred.connect(self._on_smart_log_save_error)
@@ -203,14 +277,45 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "Smart Log Save Failed", message)
 
     def closeEvent(self, event):
-        self.scheduler.stop()
+        """Keep running in the tray while the tracker is on; otherwise quit."""
+        if not self._quitting and self.tray is not None and self.tracker.active:
+            event.ignore()
+            self.hide()
+            if not self._tray_notice_shown:
+                self._tray_notice_shown = True
+                self.tray.notify("Work Tracker", "Still running in the tray. Use the tray menu to quit.")
+            return
+        self.quit_app()
         event.accept()
 
-def main():
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(prog="work-tracker-gui", add_help=True)
+    parser.add_argument("--hidden", action="store_true",
+                        help="start in the system tray without showing the window")
+    args, _ = parser.parse_known_args(argv)  # leave Qt's own options alone
+    return args
+
+
+def main(argv=None):
+    args = parse_args(argv)
     ensure_runtime_dirs()
     log_path = configure_logging()
+
+    # Only one app per user: hand over to the running one instead of opening a second.
+    instance = SingleInstance(user_data_dir() / "gui.lock")
+    if not instance.acquire():
+        logger.info("Another instance is running; asking it to show its window")
+        if ipc.wait_until_running(timeout=3.0):
+            try:
+                ipc.request("window.show")
+            except (ipc.IpcUnavailable, ipc.IpcError):
+                logger.warning("Could not reach the running instance")
+        return 0
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    app.setQuitOnLastWindowClosed(False)  # we decide when to quit (tray, dialogs)
     apply_theme(app)
 
     # Shared service graph (same wiring the CLI uses)
@@ -222,9 +327,27 @@ def main():
         ctx.activities,
         ctx.timesheets,
     )
-    window.show()
+    has_tray = window.setup_tray()
+
+    server = IpcServer(window.handle_ipc, parent=window)
+    if not server.start():
+        logger.error("CLI control is unavailable (could not open the local socket)")
+    app.aboutToQuit.connect(server.stop)
+
+    if args.hidden and has_tray:
+        logger.info("Started hidden in the tray")
+    elif args.hidden:
+        logger.info("No system tray available; starting minimized instead")
+        window.showMinimized()
+    else:
+        window.show()
     logger.info("Main window launched; analysis log file: %s", Path(log_path).resolve())
-    sys.exit(app.exec())
+
+    try:
+        return app.exec()
+    finally:
+        instance.release()
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

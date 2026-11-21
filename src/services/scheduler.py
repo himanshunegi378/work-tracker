@@ -69,6 +69,14 @@ class CronScheduler:
             self._jobs.clear()
         print("🛑 Scheduler stopped.")
 
+    def seconds_until_next(self, name: str) -> Optional[float]:
+        """Seconds until the named job is next due (0 if overdue), or None if unknown."""
+        with self._jobs_lock:
+            for job in self._jobs:
+                if job.name == name:
+                    return max(0.0, job.last_run + job.interval_seconds - time.time())
+        return None
+
     def is_active(self) -> bool:
         """Report whether the scheduler heartbeat is currently running."""
         return self._is_running
