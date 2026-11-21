@@ -98,7 +98,7 @@ samta-tracker timesheets rm NAME [--dry-run]
 - **Protocol:** one JSON line in, one out: `{"token", "cmd", "args"}` -> `{"ok": true, "data": {...}}` or `{"ok": false, "error": "..."}`.
 - **Commands:** `ping`, `tracker.start {every: seconds}`, `tracker.stop`, `tracker.status`, `window.show`, `data.refresh`, `app.quit`. `every` must be 60 to 86400 seconds; it overrides the saved `interval` for that run only.
 - **Single instance:** a second `gui_main.py` launch asks the running one to show its window and exits. A crashed app's stale lock and endpoint file are replaced by the next launch.
-- **Tray:** Open / Start-Stop tracker / Quit. Closing the window while the tracker runs hides it to the tray; otherwise closing quits. With no tray available, `--hidden` starts the window minimized.
+- **Tray:** Open / Start-Stop tracker / Quit. Closing the window hides it to the tray (the tracker keeps running); use Quit in the tray menu or `samta-tracker stop --quit` to exit. Without a tray icon, closing quits. With no tray available, `--hidden` starts the window minimized.
 - **First prompt:** starting the tracker shows the Smart Log prompt immediately (existing behaviour), then every interval.
 
 ## What was removed
@@ -125,7 +125,7 @@ They must stay side by side: `samta-tracker start` and `gui` launch the `WorkTra
 1. **Auth and config** (done): `login`, `logout`, `auth status`, `config get|set` (url, theme, interval), shared preferences file. The session cookies are stored in the OS keyring (`SessionStore`) so the GUI and the CLI share one server-side session; without a keyring each side logs in on its own.
 2. **Read commands** (done): `projects list|view`, `activities list`, `timesheets list|view|today`, with paging, `--all`, filters and relative dates.
 3. **Log time** (done): `log add` (flags, prompts, `--recent`, `--duration`, `--at`, `--dry-run`) and `log list`.
-4. **GUI tracker control** (done): single instance (`QLockFile`, stale locks from crashes are recovered), a loopback socket server (`src/ui/ipc_server.py`, protocol in `src/core/ipc.py`), tray icon (`src/ui/tray.py`), `--hidden`, close-to-tray while the tracker runs, `TrackerController` shared by the dashboard button, tray menu and socket.
+4. **GUI tracker control** (done): single instance (`QLockFile`, stale locks from crashes are recovered), a loopback socket server (`src/ui/ipc_server.py`, protocol in `src/core/ipc.py`), tray icon (`src/ui/tray.py`), `--hidden`, close-to-tray, `TrackerController` shared by the dashboard button, tray menu and socket.
 5. **Tracker commands** (done): `start`, `stop`, `status`, `gui`, `remind` fallback, `data.refresh` after CLI saves.
 6. **Parity, packaging and extras** (done): GUI/CLI parity test, shell completion, PyInstaller for both programs, and the change/delete commands `log edit`, `log rm`, `timesheets submit`, `timesheets rm` with matching GUI actions. Project create/edit is not possible with the account's server permissions.
 

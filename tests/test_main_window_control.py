@@ -84,7 +84,7 @@ def test_closing_without_a_tray_quits_even_while_tracking(window, monkeypatch):
     assert quits and window.tracker.active is False
 
 
-def test_closing_with_a_tray_hides_instead_while_the_tracker_runs(window, monkeypatch):
+def test_closing_with_a_tray_keeps_the_tracker_running(window, monkeypatch):
     quits = []
     monkeypatch.setattr("gui_main.QApplication.quit", lambda: quits.append(1))
     window.tray = MagicMock()
@@ -96,11 +96,23 @@ def test_closing_with_a_tray_hides_instead_while_the_tracker_runs(window, monkey
     window.tray = None  # fixture teardown closes for real
 
 
-def test_closing_with_a_tray_but_no_tracker_quits(window, monkeypatch):
+def test_closing_with_a_tray_hides_even_when_the_tracker_is_off(window, monkeypatch):
     quits = []
     monkeypatch.setattr("gui_main.QApplication.quit", lambda: quits.append(1))
     window.tray = MagicMock()
+    window.show()
+    assert window.tracker.active is False
     window.close()
+    assert quits == [] and window.isVisible() is False
+    window.tray.notify.assert_called_once()
+    window.tray = None  # fixture teardown closes for real
+
+
+def test_quit_from_the_tray_really_quits(window, monkeypatch):
+    quits = []
+    monkeypatch.setattr("gui_main.QApplication.quit", lambda: quits.append(1))
+    window.tray = MagicMock()
+    window.quit_app()
     assert quits
 
 

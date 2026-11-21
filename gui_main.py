@@ -288,13 +288,13 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "Smart Log Save Failed", message)
 
     def closeEvent(self, event):
-        """Keep running in the tray while the tracker is on; otherwise quit."""
-        if not self._quitting and self.tray is not None and self.tracker.active:
+        """With a tray icon, closing the window hides it to the tray; Quit in the tray menu exits."""
+        if not self._quitting and self.tray is not None:
             event.ignore()
             self.hide()
             if not self._tray_notice_shown:
                 self._tray_notice_shown = True
-                self.tray.notify("Work Tracker", "Still running in the tray. Use the tray menu to quit.")
+                self.tray.notify("Work Tracker", "Still running in the tray. Right-click the tray icon to quit.")
             return
         self.quit_app()
         event.accept()
