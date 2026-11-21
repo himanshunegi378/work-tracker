@@ -312,8 +312,14 @@ def test_gui_command_for_a_source_checkout_and_a_packaged_build(monkeypatch):
     assert cmd[0] == sys.executable and cmd[-1] == "--hidden" and "gui_main" in cmd[2]
     assert gui_launcher.gui_command(hidden=False)[-1] != "--hidden"
     monkeypatch.setattr(sys, "frozen", True, raising=False)
+    # Compare as paths (Windows uses backslashes) and pin the platform, which decides the .exe suffix.
+    monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setattr(sys, "executable", "/opt/wt/samta-tracker")
-    assert gui_launcher.gui_command(hidden=True) == ["/opt/wt/WorkTracker", "--hidden"]
+    cmd = gui_launcher.gui_command(hidden=True)
+    assert Path(cmd[0]) == Path("/opt/wt/WorkTracker") and cmd[1:] == ["--hidden"]
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(sys, "executable", "/opt/wt/samta-tracker.exe")
+    assert Path(gui_launcher.gui_command(hidden=False)[0]) == Path("/opt/wt/WorkTracker.exe")
 
 
 def test_log_add_asks_the_desktop_app_to_refresh_after_saving(monkeypatch):

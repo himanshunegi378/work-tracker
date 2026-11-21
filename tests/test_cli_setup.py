@@ -15,6 +15,8 @@ runner = CliRunner()
 @pytest.fixture
 def fake_install(tmp_path, monkeypatch):
     """A fake unpacked app: <tmp>/app/samta-tracker, with HOME in <tmp>/home."""
+    if os.name == "nt":
+        pytest.skip("symlink-based setup is the Linux/macOS path; Windows edits PATH (tested below)")
     home = tmp_path / "home"
     home.mkdir()
     exe = tmp_path / "app" / "samta-tracker"

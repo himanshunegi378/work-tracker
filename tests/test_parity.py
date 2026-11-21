@@ -7,6 +7,7 @@ CLI-only and documented in docs/cli-spec.md.
 
 import os
 import re
+import json
 import sys
 from pathlib import Path
 
@@ -156,4 +157,5 @@ def test_completion_install_writes_only_under_the_users_home(tmp_path, monkeypat
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
     result = CliRunner().invoke(app, ["--json", "completion", "bash", "--install"])
     assert result.exit_code == 0, result.output
-    assert str(tmp_path) in result.output
+    # JSON escapes Windows backslashes, so compare the parsed path, not the raw text
+    assert Path(json.loads(result.output)["path"]).is_relative_to(tmp_path)
