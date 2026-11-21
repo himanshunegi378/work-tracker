@@ -14,7 +14,7 @@ from src.cli.commands.timesheets import _LOG_COLUMNS, _log_rows
 from src.cli.context import get_context
 from src.cli.errors import ERROR, USAGE, CliError, handle_errors
 from src.cli.output import GlobalOptions, emit_data, render_details, success
-from src.core import dates, prefs
+from src.core import dates, ipc, prefs
 from src.core.durations import format_duration, parse_duration
 from src.core.log_plan import LogPlan, PlanError, plan_log
 
@@ -114,6 +114,14 @@ def _preview(plan: LogPlan, project: Tuple[str, str], activity: str, description
     return block + "".join(f"\n! {note}" for note in plan.notes)
 
 
+def _notify_desktop_app() -> None:
+    """If the desktop app is open, ask it to refresh. Never fails the command."""
+    try:
+        ipc.request("data.refresh", timeout=1.0)
+    except (ipc.IpcUnavailable, ipc.IpcError):
+        pass
+
+
 @log_app.command("add")
 @handle_errors
 def add(
@@ -193,6 +201,7 @@ def add(
     )
     day = f"{plan.to_dt:%Y-%m-%d}"
     day_hours = day_total_hours(detail, day)
+    _notify_desktop_app()
 
     if opts.json_mode:
         print(json.dumps({"saved": True, **summary, "timesheet": detail.get("name"), "hours_on_date": round(day_hours, 4)},

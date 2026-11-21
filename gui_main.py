@@ -52,6 +52,8 @@ class MainWindow(QMainWindow):
         self._smart_log_save_in_flight = False
         self._quitting = False
         self._tray_notice_shown = False
+        self.started_hidden = False   # launched with --hidden (e.g. by `samta-tracker start`)
+        self._window_shown = False    # the user has seen the window at least once
 
         # 1. Reminder tracker (shared by the dashboard button, tray icon and CLI)
         self.tracker = TrackerController(parent=self)
@@ -135,6 +137,10 @@ class MainWindow(QMainWindow):
         self.tray.show()
         return True
 
+    def showEvent(self, event):
+        self._window_shown = True
+        super().showEvent(event)
+
     def show_window(self):
         if self.isMinimized():
             self.showNormal()
@@ -188,6 +194,8 @@ class MainWindow(QMainWindow):
             "tracker": self.tracker.status(),
             "window_visible": self.isVisible() and not self.isMinimized(),
             "tray": self.tray is not None,
+            "started_hidden": self.started_hidden,
+            "window_shown": self._window_shown,
         }
 
     @Slot()
@@ -327,6 +335,7 @@ def main(argv=None):
         ctx.activities,
         ctx.timesheets,
     )
+    window.started_hidden = args.hidden
     has_tray = window.setup_tray()
 
     server = IpcServer(window.handle_ipc, parent=window)

@@ -30,3 +30,11 @@ def fake_keyring(monkeypatch):
     monkeypatch.setattr(keyring, "set_password", set_password)
     monkeypatch.setattr(keyring, "delete_password", delete_password)
     return store
+
+
+@pytest.fixture(autouse=True)
+def isolated_ipc_endpoint(tmp_path, monkeypatch):
+    """Point the CLI at an empty endpoint file so tests never reach a real running app."""
+    from src.core import ipc
+
+    monkeypatch.setattr(ipc, "endpoint_path", lambda: tmp_path / "ipc-endpoint.json")

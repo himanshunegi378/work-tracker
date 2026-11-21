@@ -61,16 +61,18 @@ samta-tracker log list [--date DATE | --timesheet NAME]
 - `log list` shows entries for a day (default today) or for a whole timesheet, with a total. Tables show times to the minute; `--json` carries the raw server values. The server stores each row's hours to 2 decimals, so row hours can differ slightly from the exact timesheet total.
 - Later: `log edit`, `log rm`.
 
-### Tracker control (talks to the GUI)
+### Tracker control (talks to the desktop app)
 | Command | Flags | Behaviour |
 |---|---|---|
-| `samta-tracker start` | `--every 15m`, `--hidden` (default) / `--show` | If the GUI isn't running, launch it to the **system tray** and wait for it (10 s). Then start the tracker. If already running, just start the tracker. |
-| `samta-tracker stop` | `--quit` | Stop the tracker. If the CLI launched the GUI and the window was never opened, quit it too. `--quit` always quits. |
-| `samta-tracker status` | | User, tracker state (active/inactive, next prompt in N min), GUI running or not, project and timesheet counts. |
-| `samta-tracker gui` | | Open the window, or raise it if already running. |
-| `samta-tracker remind` | `--every 15m` | **Fallback for no-display sessions (SSH, CI).** Foreground reminders in the terminal, saved through `log add`. |
+| `samta-tracker start` | `--every 15m`, `--show` | If the app isn't running, launch it detached in the **system tray** (waits up to 10 s; fails fast if it exits). Then start the tracker. `--every` overrides the saved `interval` for this run. `--show` also opens the window. |
+| `samta-tracker stop` | `--quit` | Stop the tracker. If the CLI started the app and nobody ever opened its window, close it too. `--quit` always closes it. Idempotent: exits 0 with a note if the app isn't running. |
+| `samta-tracker status` | | User, server, whether the app is running (tray / window), tracker state with the next prompt time, project count, and timesheet rows (latest 20), the same numbers as the dashboard. Exits 0 even when logged out. |
+| `samta-tracker gui` | | Open the window, or bring it forward if the app is already running. |
+| `samta-tracker remind` | `--every 15m` | **Fallback for sessions without a display.** Foreground reminders in this terminal (bell + "Log it now?"), saved through `log add` (recent entries first). Waits one interval before the first reminder. Needs a terminal; Ctrl+C stops. |
 
-With no display available, `start/stop/gui` exit with code 4 and suggest `samta-tracker remind`.
+With no display available, `start` and `gui` exit with code 4 and suggest `samta-tracker remind`.
+After a successful `log add`, the CLI asks a running desktop app to refresh its dashboard.
+The first prompt after `start` opens immediately (as with the dashboard button), then repeats every interval.
 
 ### Config
 `samta-tracker config get|set <key> [value]` with keys `url`, `theme` (`light|dark`), `interval` (reminder interval).
@@ -106,7 +108,7 @@ python gui_main.py            # or: work-tracker-gui
 2. **Read commands** (done): `projects list|view`, `activities list`, `timesheets list|view|today`, with paging, `--all`, filters and relative dates.
 3. **Log time** (done): `log add` (flags, prompts, `--recent`, `--duration`, `--at`, `--dry-run`) and `log list`.
 4. **GUI tracker control** (done): single instance (`QLockFile`, stale locks from crashes are recovered), a loopback socket server (`src/ui/ipc_server.py`, protocol in `src/core/ipc.py`), tray icon (`src/ui/tray.py`), `--hidden`, close-to-tray while the tracker runs, `TrackerController` shared by the dashboard button, tray menu and socket.
-5. **Tracker commands**: `start`, `stop`, `status`, `gui`, `remind` fallback, `data.refresh` after CLI saves.
+5. **Tracker commands** (done): `start`, `stop`, `status`, `gui`, `remind` fallback, `data.refresh` after CLI saves.
 6. **Parity, packaging and extras**: GUI/CLI parity test, shell completion, PyInstaller for both entry points, then edit/delete/submit.
 
 ## Open points
