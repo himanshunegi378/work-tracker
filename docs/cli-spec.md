@@ -135,4 +135,4 @@ They must stay side by side: `samta-tracker start` and `gui` launch the `WorkTra
 
 ## Agent skill
 
-`samta-tracker install-skill` copies `src/cli/skill/SKILL.md` (bundled with the app) to `~/.claude/skills/samta-tracker/`, so Claude Code and compatible agents can drive the CLI. Flags: `--project` (install into `./.claude/skills`), `--dir PATH` (another agent's skills folder), `--force` (overwrite a different copy; `-y` also works), `--print` (print instead of install). Re-running when identical is a no-op.
+`samta-tracker install-skill` copies `skills/samta-tracker/SKILL.md` (source; copied to `src/cli/skill/` by `scripts/sync_skill.py` and bundled with the app) to `~/.claude/skills/samta-tracker/`, so Claude Code and compatible agents can drive the CLI. Flags: `--project` (install into `./.claude/skills`), `--dir PATH` (another agent's skills folder), `--force` (overwrite a different copy; `-y` also works), `--print` (print instead of install). Re-running when identical is a no-op.

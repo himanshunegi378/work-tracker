@@ -41,3 +41,11 @@ def test_print_writes_nothing(tmp_path, monkeypatch):
     r = runner.invoke(app, ["install-skill", "--print"])
     assert r.exit_code == 0 and "name: samta-tracker" in r.stdout
     assert not (tmp_path / ".claude").exists()
+
+
+def test_packaged_skill_matches_the_source():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    assert (root / "skills/samta-tracker/SKILL.md").read_text() == (root / "src/cli/skill/SKILL.md").read_text(), \
+        "run: python scripts/sync_skill.py"
