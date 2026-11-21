@@ -13,4 +13,4 @@ $PythonExe = Join-Path $VenvDir "Scripts\\python.exe"
 & $PythonExe -m pip install -r requirements.txt pyinstaller
 & $PythonExe -m PyInstaller --noconfirm --clean work_tracker.spec
 
-Write-Host "Windows bundle ready in: $RootDir\\dist\\WorkTracker"
+Write-Host "Windows bundle ready in: $RootDir\\dist\\WorkTracker (WorkTracker.exe = desktop app, samta-tracker.exe = command line)"

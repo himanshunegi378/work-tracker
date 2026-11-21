@@ -102,6 +102,13 @@ samta-tracker --help
 python gui_main.py            # or: work-tracker-gui
 ```
 
+## Packaged build
+`scripts/build_linux.sh` (or `build_macos.sh` / `build_windows.ps1`) runs `work_tracker.spec`, which builds both programs into one folder, `dist/WorkTracker/`:
+- `WorkTracker` is the desktop app (no console window).
+- `samta-tracker` is the command line (console). It also bundles Qt, which `login --ui` needs.
+
+They must stay side by side: `samta-tracker start` and `gui` launch the `WorkTracker` next to it. Verified on Linux (about 197 MB): `start`, `status`, `gui`, `stop --quit`, reading the real keyring login, and `completion`. The macOS and Windows scripts are updated but not built or tested here.
+
 ## Delivery plan
 0. **Foundation** (done): `src/core` (`build_app()` shared wiring, logging), `src/cli` skeleton (global flags, output helpers, exit codes), `pyproject.toml` with the `samta-tracker` entry point, GUI refactored onto the core, old CLI removed.
 1. **Auth and config** (done): `login`, `logout`, `auth status`, `config get|set` (url, theme, interval), shared preferences file. The session cookies are stored in the OS keyring (`SessionStore`) so the GUI and the CLI share one server-side session; without a keyring each side logs in on its own.
@@ -109,7 +116,7 @@ python gui_main.py            # or: work-tracker-gui
 3. **Log time** (done): `log add` (flags, prompts, `--recent`, `--duration`, `--at`, `--dry-run`) and `log list`.
 4. **GUI tracker control** (done): single instance (`QLockFile`, stale locks from crashes are recovered), a loopback socket server (`src/ui/ipc_server.py`, protocol in `src/core/ipc.py`), tray icon (`src/ui/tray.py`), `--hidden`, close-to-tray while the tracker runs, `TrackerController` shared by the dashboard button, tray menu and socket.
 5. **Tracker commands** (done): `start`, `stop`, `status`, `gui`, `remind` fallback, `data.refresh` after CLI saves.
-6. **Parity, packaging and extras**: GUI/CLI parity test (done), shell completion (done), PyInstaller for both entry points, then edit/delete/submit.
+6. **Parity, packaging and extras**: GUI/CLI parity test (done), shell completion (done), PyInstaller for both programs (done), then edit/delete/submit (open).
 
 ## Open points
 - Tray support varies on Linux. Some GNOME setups need an extension for tray icons. If the tray is unavailable, `--hidden` falls back to a minimized window.
