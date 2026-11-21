@@ -39,7 +39,7 @@ def build_new_timesheet_doc(template: Dict[str, Any], day: date) -> Dict[str, An
             "modified": format_doc_datetime(current_dt, include_microseconds=True),
             "modified_by": template.get("modified_by") or template.get("owner"),
             "status": "Draft",
-            "workflow_state": template.get("workflow_state") or "Pending",
+            "workflow_state": "Pending",
             "start_date": day_str,
             "end_date": day_str,
             "total_hours": 0.0,
