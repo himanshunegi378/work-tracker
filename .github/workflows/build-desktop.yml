@@ -66,14 +66,14 @@ jobs:
         shell: bash
         run: |
           python -m venv .venv
-          .venv/bin/python -m pip install -r requirements.txt pyinstaller
+          .venv/bin/python -m pip install -r requirements.txt pytest pyinstaller
 
       - name: Set up Python environment on Windows
         if: ${{ runner.os == 'Windows' }}
         shell: pwsh
         run: |
           python -m venv .venv
-          .\.venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt pytest pyinstaller
 
       - name: Verify PySide6 Qt import on Linux
         if: ${{ runner.os == 'Linux' }}
@@ -87,19 +87,19 @@ jobs:
         shell: bash
         run: |
           QT_QPA_PLATFORM=offscreen QT_OPENGL=software LIBGL_ALWAYS_SOFTWARE=1 \
-            .venv/bin/python -m unittest discover -s tests
+            .venv/bin/python -m pytest tests -q
 
       - name: Run test suite on macOS
         if: ${{ runner.os == 'macOS' }}
         shell: bash
         run: |
-          QT_QPA_PLATFORM=offscreen .venv/bin/python -m unittest discover -s tests
+          QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests -q
 
       - name: Run test suite on Windows
         if: ${{ runner.os == 'Windows' }}
         shell: pwsh
         run: |
-          .\.venv\Scripts\python.exe -m unittest discover -s tests
+          .\.venv\Scripts\python.exe -m pytest tests -q
 
       - name: Build desktop bundle on Ubuntu
         if: ${{ runner.os == 'Linux' }}
