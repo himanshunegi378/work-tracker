@@ -51,7 +51,7 @@ def _configure_cli_logging() -> None:
 
 
 def _register_commands() -> None:
-    from src.cli.commands import activities, auth, completion, config, log, projects, timesheets, tracker
+    from src.cli.commands import activities, auth, completion, config, log, projects, skill, timesheets, tracker
 
     app.command("login")(auth.login)
     app.command("logout")(auth.logout)
@@ -67,6 +67,7 @@ def _register_commands() -> None:
     app.command("gui")(tracker.gui)
     app.command("remind")(tracker.remind)
     app.command("completion")(completion.completion)
+    app.command("install-skill")(skill.install_skill)
 
 
 _register_commands()

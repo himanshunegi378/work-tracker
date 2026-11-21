@@ -9,7 +9,7 @@ icon_path = project_root / "assets" / "work_tracker.ico"
 icon = str(icon_path) if icon_path.exists() else None
 
 hiddenimports = collect_submodules("src") + collect_submodules("keyring.backends")
-datas = copy_metadata("keyring")
+datas = copy_metadata("keyring") + [(str(project_root / "src" / "cli" / "skill" / "SKILL.md"), "src/cli/skill")]
 
 
 def analyze(script):

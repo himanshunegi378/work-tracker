@@ -132,3 +132,7 @@ They must stay side by side: `samta-tracker start` and `gui` launch the `WorkTra
 ## Open points
 - Tray support varies on Linux. Some GNOME setups need an extension for tray icons. If the tray is unavailable, `--hidden` falls back to a minimized window.
 - Console script is `samta-tracker`. It has no clash with GNOME's `tracker` search tool. A short alias (e.g. `st`) can be added later.
+
+## Agent skill
+
+`samta-tracker install-skill` copies `src/cli/skill/SKILL.md` (bundled with the app) to `~/.claude/skills/samta-tracker/`, so Claude Code and compatible agents can drive the CLI. Flags: `--project` (install into `./.claude/skills`), `--dir PATH` (another agent's skills folder), `--force` (overwrite a different copy; `-y` also works), `--print` (print instead of install). Re-running when identical is a no-op.

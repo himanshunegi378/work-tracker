@@ -21,5 +21,8 @@ work-tracker-gui = "gui_main:main"
 [tool.setuptools]
 py-modules = ["gui_main"]
 
+[tool.setuptools.package-data]
+"src.cli.skill" = ["SKILL.md"]
+
 [tool.setuptools.packages.find]
 include = ["src*"]

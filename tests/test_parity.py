@@ -45,7 +45,7 @@ OTHER_GUI_FEATURES = {
 }
 
 # CLI commands with no GUI screen of their own (deliberate)
-CLI_ONLY = {"remind", "completion"}
+CLI_ONLY = {"remind", "completion", "install-skill"}
 
 
 def cli_commands():
