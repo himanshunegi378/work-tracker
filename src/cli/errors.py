@@ -20,21 +20,30 @@ class CliError(Exception):
         self.hint = hint
 
 
-def exit_code_for(exc: BaseException) -> int:
-    """Map an exception to a process exit code."""
+def _is_auth_error(exc: BaseException) -> bool:
+    """True if `exc`, or anything it wraps (services re-raise API errors), is a login problem."""
     from src.api import AuthenticationRequiredError
 
+    seen = set()
+    while exc is not None and id(exc) not in seen:
+        if isinstance(exc, AuthenticationRequiredError):
+            return True
+        seen.add(id(exc))
+        exc = exc.__cause__ or exc.__context__
+    return False
+
+
+def exit_code_for(exc: BaseException) -> int:
+    """Map an exception to a process exit code."""
     if isinstance(exc, CliError):
         return exc.exit_code
-    if isinstance(exc, AuthenticationRequiredError):
+    if _is_auth_error(exc):
         return NOT_LOGGED_IN
     return ERROR
 
 
 def message_for(exc: BaseException) -> str:
-    from src.api import AuthenticationRequiredError
-
-    if isinstance(exc, AuthenticationRequiredError):
+    if not isinstance(exc, CliError) and _is_auth_error(exc):
         return "Not logged in. Run `samta-tracker login`."
     return getattr(exc, "message", None) or str(exc) or exc.__class__.__name__
 

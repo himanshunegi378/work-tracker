@@ -12,7 +12,7 @@ from src.services.timesheet_parsing import (
     normalize_reportview_response,
     normalize_timesheet_detail_response,
 )
-from src.services.timesheet_shared import TimesheetServiceError
+from src.services.timesheet_shared import TimesheetAuthError, TimesheetServiceError
 from src.services.timesheet_smart_log import (
     apply_smart_log_update_to_doc,
     build_new_timesheet_doc,
@@ -69,11 +69,21 @@ class TimesheetService:
         page_length: int = 20,
         employee: Optional[str] = None,
         csrf_token: Optional[str] = None,
+        status: Optional[str] = None,
+        workflow_state: Optional[str] = None,
+        from_date: Optional[Any] = None,
+        to_date: Optional[Any] = None,
+        covering_date: Optional[Any] = None,
     ) -> List[Dict[str, Any]]:
-        """Return normalized timesheet list records for one employee."""
+        """Return normalized timesheet list records for one employee.
+
+        Optional filters: exact `status` / `workflow_state`; `from_date` keeps
+        timesheets starting on or after it; `to_date` keeps those ending on or
+        before it; `covering_date` keeps the timesheet whose range contains it.
+        """
         employee_filter = employee or self.auth_service.getSession()
         if not employee_filter:
-            raise TimesheetServiceError(
+            raise TimesheetAuthError(
                 "No authenticated user is available for the timesheet employee filter."
             )
 
@@ -82,7 +92,10 @@ class TimesheetService:
                 self.reportview_endpoint,
                 data=urllib.parse.urlencode(
                     self._build_reportview_payload(
-                        filters=[["Timesheet", "employee", "=", employee_filter]],
+                        filters=[["Timesheet", "employee", "=", employee_filter]]
+                        + self._build_optional_filters(
+                            status, workflow_state, from_date, to_date, covering_date
+                        ),
                         start=start,
                         page_length=page_length,
                     )
@@ -101,6 +114,29 @@ class TimesheetService:
             logger.error("Failed to fetch timesheets: %s", exc)
             raise TimesheetServiceError(f"Failed to fetch timesheets: {exc}") from exc
 
+    @staticmethod
+    def _build_optional_filters(
+        status: Optional[str],
+        workflow_state: Optional[str],
+        from_date: Optional[Any],
+        to_date: Optional[Any],
+        covering_date: Optional[Any],
+    ) -> List[List[Any]]:
+        """Translate list filters into reportview filter triples."""
+        extra: List[List[Any]] = []
+        if status:
+            extra.append(["Timesheet", "status", "=", status])
+        if workflow_state:
+            extra.append(["Timesheet", "workflow_state", "=", workflow_state])
+        if from_date:
+            extra.append(["Timesheet", "start_date", ">=", str(from_date)])
+        if to_date:
+            extra.append(["Timesheet", "end_date", "<=", str(to_date)])
+        if covering_date:
+            extra.append(["Timesheet", "start_date", "<=", str(covering_date)])
+            extra.append(["Timesheet", "end_date", ">=", str(covering_date)])
+        return extra
+
     def get_latest_timesheet_for_user(
         self,
         employee: Optional[str] = None,
@@ -109,7 +145,7 @@ class TimesheetService:
         """Return the most recent timesheet detail for the current user."""
         employee_filter = employee or self.auth_service.getSession()
         if not employee_filter:
-            raise TimesheetServiceError(
+            raise TimesheetAuthError(
                 "No authenticated user is available for the timesheet employee filter."
             )
 
@@ -136,7 +172,7 @@ class TimesheetService:
         """Return the latest row state used to prefill and merge smart logs."""
         employee_filter = employee or self.auth_service.getSession()
         if not employee_filter:
-            raise TimesheetServiceError(
+            raise TimesheetAuthError(
                 "No authenticated user is available for the timesheet employee filter."
             )
 
@@ -231,7 +267,7 @@ class TimesheetService:
 
         employee = self.auth_service.getSession()
         if not employee:
-            raise TimesheetServiceError(
+            raise TimesheetAuthError(
                 "No authenticated user is available for the timesheet employee filter."
             )
 

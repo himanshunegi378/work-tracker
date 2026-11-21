@@ -6,6 +6,7 @@ Color is disabled for `--no-color`, `NO_COLOR`, or when stdout is not a TTY.
 
 import json
 import os
+import shutil
 import sys
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -45,11 +46,30 @@ def _cell(value: Any) -> str:
     return str(value)
 
 
-def render_table(rows: Sequence[Dict[str, Any]], columns: Sequence[Column], color: bool = False) -> str:
-    """Render rows as an aligned text table with a header row."""
+def render_table(
+    rows: Sequence[Dict[str, Any]],
+    columns: Sequence[Column],
+    color: bool = False,
+    max_width: Optional[int] = None,
+) -> str:
+    """Render rows as an aligned text table with a header row.
+
+    If `max_width` is given and the table is wider, the last column is
+    shortened with an ellipsis (it is the free-text column in our tables).
+    """
     headers = [h for _, h in columns]
     body: List[List[str]] = [[_cell(r.get(k)) for k, _ in columns] for r in rows]
     widths = [max([len(h)] + [len(line[i]) for line in body]) for i, h in enumerate(headers)]
+
+    if max_width and len(widths) > 1:
+        gaps = 2 * (len(widths) - 1)
+        room = max_width - (sum(widths[:-1]) + gaps)
+        floor = max(len(headers[-1]), 10)
+        if sum(widths) + gaps > max_width and room >= floor:
+            widths[-1] = room
+            for line in body:
+                if len(line[-1]) > room:
+                    line[-1] = line[-1][: room - 1] + "…"
 
     def fmt(cells: Iterable[str]) -> str:
         return "  ".join(c.ljust(w) for c, w in zip(cells, widths)).rstrip()
@@ -74,9 +94,16 @@ def emit_data(
         for row in rows:
             print(row.get(quiet_key, ""))
         return
-    print(render_table(rows, columns, opts.color))
+    width = shutil.get_terminal_size((100, 24)).columns if sys.stdout.isatty() else None
+    print(render_table(rows, columns, opts.color, max_width=width))
     if footer and not opts.quiet:
         print(style(footer, "dim", opts.color), file=sys.stderr)
+
+
+def render_details(pairs: Sequence[Tuple[str, Any]], color: bool = False) -> str:
+    """Render label/value pairs as an aligned block (skipping nothing; blanks show '-')."""
+    width = max(len(label) for label, _ in pairs)
+    return "\n".join(f"{style(label.ljust(width), 'bold', color)}  {_cell(value)}" for label, value in pairs)
 
 
 def success(message: str, opts: GlobalOptions) -> None:

@@ -30,14 +30,20 @@ Exit codes: `0` ok · `1` error · `2` bad usage · `3` not logged in · `4` GUI
 | `samta-tracker auth status` | | Server, user, session valid or expired. |
 
 ### Read data
+Shared by every `list`: `-n/--limit` (default 20 per page; with `--all`, the most rows to fetch, default 250, max 1000), `--page N`, `--all` (cannot be combined with `--page`), `-s/--search` (projects, activities). The server gives no totals, so the footer reads `20 projects shown · page 1 · more may exist (--page 2)`. `-q` prints only ids/names; `--json` prints full records.
+
 | Command | Flags |
 |---|---|
-| `samta-tracker projects list` | `-s TEXT`, `--status open\|completed\|cancelled`, `--priority high\|medium\|low`, `-n 20`, `--page N` |
-| `samta-tracker projects view ID` | |
-| `samta-tracker activities list` | `-s TEXT`, `-n`, `--page` |
-| `samta-tracker timesheets list` | `--status`, `--from/--to DATE`, `-n`, `--page` |
-| `samta-tracker timesheets view NAME` | `--logs` |
-| `samta-tracker timesheets today` | |
+| `samta-tracker projects list` | `-s`, `--status open\|completed\|cancelled`, `--priority high\|medium\|low`, `--active/--inactive`, `-n`, `--page`, `--all` |
+| `samta-tracker projects view ID` | ID or exact project name |
+| `samta-tracker activities list` | `-s`, `-n`, `--page`, `--all` |
+| `samta-tracker timesheets list` | `--status draft\|submitted\|billed\|payslip\|completed\|cancelled`, `--workflow-state TEXT`, `--from DATE`, `--to DATE`, `--employee ID`, `-n`, `--page`, `--all` |
+| `samta-tracker timesheets view NAME` | `--no-logs` (time logs are shown by default) |
+| `samta-tracker timesheets today` | `--date DATE`, `--no-logs` |
+
+Dates accept `YYYY-MM-DD`, `today`, `yesterday`, `tomorrow`, `-7d`, `+3d`, `-2w`, or a weekday name (the most recent one on or before today).
+`timesheets today` finds the timesheet whose range covers the date, shows the day's logs and the hours logged that day; exit 1 if none covers it.
+Time-log tables shorten the description to the terminal width; `--json` is never truncated.
 
 ### Log time (same behaviour as the GUI Smart Log)
 ```
@@ -90,7 +96,7 @@ python gui_main.py            # or: work-tracker-gui
 ## Delivery plan
 0. **Foundation** (done): `src/core` (`build_app()` shared wiring, logging), `src/cli` skeleton (global flags, output helpers, exit codes), `pyproject.toml` with the `samta-tracker` entry point, GUI refactored onto the core, old CLI removed.
 1. **Auth and config** (done): `login`, `logout`, `auth status`, `config get|set` (url, theme, interval), shared preferences file. The session cookies are stored in the OS keyring (`SessionStore`) so the GUI and the CLI share one server-side session; without a keyring each side logs in on its own.
-2. **Read commands**: `projects list|view`, `activities list`, `timesheets list|view|today`.
+2. **Read commands** (done): `projects list|view`, `activities list`, `timesheets list|view|today`, with paging, `--all`, filters and relative dates.
 3. **Log time**: `log add` (flags, prompts, `--recent`, `--duration`) and `log list`.
 4. **GUI tracker control**: single instance, local socket protocol, tray icon, `--hidden`, shared reminder interval.
 5. **Tracker commands**: `start`, `stop`, `status`, `gui`, `remind` fallback, `data.refresh` after CLI saves.

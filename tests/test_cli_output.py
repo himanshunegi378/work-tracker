@@ -88,3 +88,36 @@ def test_cli_error_keeps_its_exit_code_and_hint():
 
 def test_exit_code_constants_match_spec():
     assert (errors.OK, errors.ERROR, errors.USAGE, errors.NOT_LOGGED_IN, errors.GUI_UNAVAILABLE) == (0, 1, 2, 3, 4)
+
+
+def test_render_table_shortens_last_column_to_terminal_width():
+    rows = [{"a": "x", "b": "y" * 80}]
+    cols = [("a", "A"), ("b", "DESC")]
+    lines = render_table(rows, cols, max_width=40).split("\n")
+    assert all(len(line) <= 40 for line in lines)
+    assert lines[1].endswith("…")
+    assert "y" * 80 in render_table(rows, cols)  # untouched when no width given (piped output)
+
+
+def test_render_table_does_not_truncate_when_it_fits_or_is_too_narrow():
+    rows = [{"a": "x", "b": "short"}]
+    cols = [("a", "A"), ("b", "DESC")]
+    assert "…" not in render_table(rows, cols, max_width=40)
+    assert "…" not in render_table([{"a": "x" * 30, "b": "y" * 30}], cols, max_width=20)  # no room: leave as is
+
+
+def test_wrapped_auth_error_still_maps_to_not_logged_in():
+    # services re-raise ApiClientError subclasses as their own error type
+    class ProjectServiceError(Exception):
+        pass
+
+    try:
+        try:
+            raise AuthenticationRequiredError("User is not logged in. Request aborted.")
+        except AuthenticationRequiredError as inner:
+            raise ProjectServiceError("Failed to fetch projects: not logged in") from inner
+    except ProjectServiceError as wrapped:
+        assert errors.exit_code_for(wrapped) == errors.NOT_LOGGED_IN
+        assert "samta-tracker login" in errors.message_for(wrapped)
+
+    assert errors.exit_code_for(RuntimeError("other")) == errors.ERROR
