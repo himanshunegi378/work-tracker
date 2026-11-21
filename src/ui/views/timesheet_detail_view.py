@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.ui.theme import COLORS, card_style
-from src.ui.design import bind_style, current as _t
+from src.ui.design import bind_style, button, current as _t, label as design_label
 _COLORS = COLORS
 
 def _BTN_STYLE() -> str:
@@ -53,6 +53,10 @@ def _TABLE_STYLE() -> str:
         font-size: 13px;
         color: {_COLORS['text_dark']};
     }}
+    QTableWidget::item:selected {{
+        background-color: {_t().accent_soft};
+        color: {_t().text};
+    }}
     QHeaderView::section {{
         background-color: {_t().surface_alt};
         color: {_COLORS['text_muted']};
@@ -69,17 +73,23 @@ class TimesheetDetailView(QWidget):
     """UI component for rendering one timesheet detail payload."""
 
     back_requested = Signal()
+    edit_entry_requested = Signal(str)     # row name
+    delete_entry_requested = Signal(str)   # row name
+    submit_requested = Signal()
+    delete_timesheet_requested = Signal()
 
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self._summary_labels: Dict[str, QLabel] = {}
+        self._entries: Dict[str, dict] = {}
+        self._editable = False
         self._setup_ui()
 
     def _setup_ui(self) -> None:
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(30, 30, 30, 20)
         main_layout.setSpacing(16)
-        bind_style(self, lambda: f"background-color: {_COLORS['bg']};")
+        bind_style(self, lambda: f"TimesheetDetailView {{ background-color: {_COLORS['bg']}; }}")
 
         header_row = QHBoxLayout()
         self.back_btn = QPushButton("← Back")
@@ -163,9 +173,69 @@ class TimesheetDetailView(QWidget):
 
         main_layout.addWidget(logs_card, stretch=1)
 
+        # Actions (enabled only for Pending drafts; same rules as the CLI)
+        actions = QHBoxLayout()
+        actions.setSpacing(8)
+        self.edit_btn = button("Edit entry", "secondary")
+        self.delete_entry_btn = button("Delete entry", "secondary")
+        self.delete_timesheet_btn = button("Delete timesheet", "danger")
+        self.submit_btn = button("Submit timesheet", "primary")
+        self.actions_note = design_label("", "caption")
+        for widget in (self.edit_btn, self.delete_entry_btn):
+            actions.addWidget(widget)
+        actions.addWidget(self.actions_note)
+        actions.addStretch()
+        actions.addWidget(self.delete_timesheet_btn)
+        actions.addWidget(self.submit_btn)
+        main_layout.addLayout(actions)
+
+        self.edit_btn.clicked.connect(lambda: self._emit_for_selected(self.edit_entry_requested))
+        self.delete_entry_btn.clicked.connect(lambda: self._emit_for_selected(self.delete_entry_requested))
+        self.submit_btn.clicked.connect(self.submit_requested.emit)
+        self.delete_timesheet_btn.clicked.connect(self.delete_timesheet_requested.emit)
+        self.time_logs_table.itemSelectionChanged.connect(self._update_actions)
+        self.time_logs_table.itemDoubleClicked.connect(lambda _item: self._emit_for_selected(self.edit_entry_requested))
+        self._update_actions()
+
+    # -- actions ---------------------------------------------------------
+    def selected_entry_name(self) -> str:
+        item = self.time_logs_table.item(self.time_logs_table.currentRow(), 0) if self.time_logs_table.currentRow() >= 0 else None
+        return str(item.data(Qt.UserRole)) if item is not None and item.data(Qt.UserRole) else ""
+
+    def entry(self, row_name: str) -> dict:
+        return self._entries.get(row_name, {})
+
+    @property
+    def is_editable(self) -> bool:
+        return self._editable
+
+    def _emit_for_selected(self, signal) -> None:
+        name = self.selected_entry_name()
+        if name:
+            signal.emit(name)
+
+    def _update_actions(self) -> None:
+        has_selection = bool(self.selected_entry_name())
+        self.edit_btn.setEnabled(self._editable and has_selection)
+        self.delete_entry_btn.setEnabled(self._editable and has_selection)
+        self.submit_btn.setEnabled(self._editable and bool(self._entries))
+        self.delete_timesheet_btn.setEnabled(self._editable)
+        self.actions_note.setText("" if self._editable else "Only Pending timesheets can be changed.")
+
+    def confirm(self, title: str, text: str) -> bool:
+        """Ask a yes/no question (overridable in tests)."""
+        box = QMessageBox(QMessageBox.Question, title, text, QMessageBox.Yes | QMessageBox.No, self)
+        box.setDefaultButton(QMessageBox.No)
+        return box.exec() == QMessageBox.Yes
+
+    def show_info(self, title: str, message: str) -> None:
+        QMessageBox.information(self, title, message)
+
     @Slot(dict)
     def display_timesheet_detail(self, detail: dict) -> None:
         """Render one normalized timesheet detail payload."""
+        self._editable = detail.get("workflow_state") in ("Pending", "", None)
+        self._entries = {str(log.get("name")): log for log in detail.get("time_logs") or [] if log.get("name")}
         self.title_lbl.setText(f"Timesheet Detail • {detail.get('name') or '—'}")
         for key, label in self._summary_labels.items():
             value = detail.get(key)
@@ -176,6 +246,7 @@ class TimesheetDetailView(QWidget):
         if not time_logs:
             self.empty_lbl.show()
             self.time_logs_table.hide()
+            self._update_actions()
             return
 
         self.empty_lbl.hide()
@@ -193,18 +264,29 @@ class TimesheetDetailView(QWidget):
                 str(log.get("description", "")),
             ]
             for column, value in enumerate(values):
-                self.time_logs_table.setItem(row, column, QTableWidgetItem(value))
+                item = QTableWidgetItem(value)
+                if column == 0:
+                    item.setData(Qt.UserRole, str(log.get("name") or ""))
+                self.time_logs_table.setItem(row, column, item)
+        self._update_actions()
 
     @Slot(bool)
     def set_loading(self, is_loading: bool) -> None:
         """Shows/hides the loading indicator and disables interactive controls."""
         self.back_btn.setEnabled(not is_loading)
         if is_loading:
+            for widget in (self.edit_btn, self.delete_entry_btn, self.submit_btn, self.delete_timesheet_btn):
+                widget.setEnabled(False)
+        if is_loading:
             self.time_logs_table.hide()
             self.empty_lbl.hide()
             self.loading_lbl.show()
         else:
             self.loading_lbl.hide()
+            self._update_actions()
+
+    def show_error_titled(self, title: str, message: str) -> None:
+        QMessageBox.critical(self, title, message)
 
     @Slot(str)
     def show_error(self, message: str) -> None:

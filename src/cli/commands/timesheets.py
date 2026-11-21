@@ -7,10 +7,13 @@ from typing import Any, Dict, List, Optional
 
 import typer
 
-from src.cli.commands._common import ALL_OPTION, LIMIT_OPTION, PAGE_OPTION, day_total_hours, load_timesheet_for_day, logs_on_day, run_list
+from src.cli.commands._common import (
+    ALL_OPTION, LIMIT_OPTION, PAGE_OPTION, day_total_hours, load_timesheet_for_day, logs_on_day,
+    fetch_timesheet, require_yes_or_terminal, run_list,
+)
 from src.cli.context import get_context
 from src.cli.errors import ERROR, USAGE, CliError, handle_errors
-from src.cli.output import GlobalOptions, emit_data, render_details
+from src.cli.output import GlobalOptions, emit_data, render_details, success
 from src.core import dates
 
 timesheets_app = typer.Typer(help="List and inspect timesheets.", no_args_is_help=True)
@@ -27,7 +30,7 @@ class Status(str, Enum):
 
 _DATE_HELP = dates.HELP
 _LOG_COLUMNS = [
-    ("activity_type", "ACTIVITY"), ("project_name", "PROJECT"), ("from_time", "FROM"),
+    ("idx", "#"), ("activity_type", "ACTIVITY"), ("project_name", "PROJECT"), ("from_time", "FROM"),
     ("to_time", "TO"), ("hours", "HOURS"), ("is_billable", "BILLABLE"), ("description", "DESCRIPTION"),
 ]
 NO_LOGS_OPTION = typer.Option(False, "--no-logs", help="Hide the time-log rows.")
@@ -124,7 +127,7 @@ def view(
 ) -> None:
     """Show one timesheet with its time logs."""
     opts: GlobalOptions = ctx.obj
-    detail = get_context(ctx).timesheets.get_timesheet_detail(name.strip())
+    detail = fetch_timesheet(get_context(ctx).timesheets, name)
     if opts.json_mode:
         print(json.dumps(detail, indent=2, ensure_ascii=False, default=str))
         return
@@ -153,3 +156,96 @@ def today(
                          indent=2, ensure_ascii=False, default=str))
         return
     _print_timesheet(detail, opts, None if no_logs else day_logs, extra=[(f"Logged on {iso}", f"{hours} h")])
+
+
+# ── submit and delete ─────────────────────────────────────────────────────
+def _confirm_in_terminal(ask: bool, preview: str, question: str) -> None:
+    import sys
+
+    if ask:
+        print(preview, file=sys.stderr)
+        if not typer.confirm(question, default=False):
+            raise CliError("Nothing changed.", ERROR)
+
+
+def _timesheet_summary(detail: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "name": detail.get("name"), "status": detail.get("status"), "workflow_state": detail.get("workflow_state"),
+        "period": f"{detail.get('start_date')} -> {detail.get('end_date')}",
+        "entries": len(detail.get("time_logs") or []), "total_hours": detail.get("total_hours"),
+        "billable_hours": detail.get("total_billable_hours"),
+    }
+
+
+@timesheets_app.command("submit")
+@handle_errors
+def submit(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., metavar="NAME", help="Timesheet name, e.g. TS-2026-00418."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Check that it can be submitted, without submitting."),
+) -> None:
+    """Submit a Pending timesheet for approval (you cannot undo this yourself)."""
+    opts: GlobalOptions = ctx.obj
+    service = get_context(ctx).timesheets
+    detail = fetch_timesheet(service, name)
+    actions = service.get_workflow_actions(name.strip())
+    summary = {**_timesheet_summary(detail), "available_actions": actions}
+    preview = render_details(
+        [("Timesheet", detail.get("name")), ("Workflow", detail.get("workflow_state")),
+         ("Period", f"{detail.get('start_date')} → {detail.get('end_date')}"),
+         ("Entries", len(detail.get("time_logs") or [])), ("Total hours", detail.get("total_hours")),
+         ("Action", "Submit" if "Submit" in actions else f"not available ({', '.join(actions) or 'none'})")],
+        opts.color,
+    )
+
+    if dry_run:
+        if opts.json_mode:
+            print(json.dumps({"dry_run": True, **summary}, indent=2, ensure_ascii=False))
+        else:
+            print(preview)
+            success("Dry run: nothing was submitted.", opts)
+        return
+
+    ask = require_yes_or_terminal(opts, "Submitting a timesheet")
+    _confirm_in_terminal(ask, preview, "Submit it for approval? You cannot undo this yourself.")
+    result = service.submit_timesheet(name.strip())
+    if opts.json_mode:
+        print(json.dumps({"submitted": True, **_timesheet_summary(result)}, indent=2, ensure_ascii=False))
+    else:
+        success(f"Submitted {result.get('name')} · now {result.get('workflow_state')}.", opts)
+
+
+@timesheets_app.command("rm")
+@handle_errors
+def rm(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., metavar="NAME", help="Timesheet name, e.g. TS-2026-00418."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be deleted without deleting it."),
+) -> None:
+    """Delete a whole Pending timesheet and all of its entries."""
+    opts: GlobalOptions = ctx.obj
+    service = get_context(ctx).timesheets
+    detail = fetch_timesheet(service, name)
+    summary = _timesheet_summary(detail)
+    preview = render_details(
+        [("Timesheet", detail.get("name")), ("Workflow", detail.get("workflow_state")),
+         ("Period", f"{detail.get('start_date')} → {detail.get('end_date')}"),
+         ("Entries", len(detail.get("time_logs") or [])), ("Total hours", detail.get("total_hours"))],
+        opts.color,
+    )
+
+    if dry_run:
+        if opts.json_mode:
+            print(json.dumps({"dry_run": True, **summary}, indent=2, ensure_ascii=False))
+        else:
+            print(preview)
+            success("Dry run: nothing was deleted.", opts)
+        return
+
+    ask = require_yes_or_terminal(opts, "Deleting a timesheet")
+    _confirm_in_terminal(ask, preview, f"Delete {detail.get('name')} and its {summary['entries']} entries?")
+    service.delete_timesheet(name.strip())
+    if opts.json_mode:
+        print(json.dumps({"deleted": True, **summary}, indent=2, ensure_ascii=False))
+    else:
+        success(f"Deleted {detail.get('name')}.", opts)

@@ -37,6 +37,11 @@ OTHER_GUI_FEATURES = {
     "tray: open window": ["gui"],
     "tray: start/stop tracker": ["start", "stop"],
     "settings: theme": ["config set"],
+    # Timesheet Detail screen: row Edit/Delete buttons and Submit/Delete timesheet buttons
+    "timesheet detail: edit entry": ["log edit"],
+    "timesheet detail: delete entry": ["log rm"],
+    "timesheet detail: submit timesheet": ["timesheets submit"],
+    "timesheet detail: delete timesheet": ["timesheets rm"],
 }
 
 # CLI commands with no GUI screen of their own (deliberate)
@@ -91,6 +96,17 @@ def test_every_cli_command_is_documented_in_the_spec():
 def test_every_cli_command_has_working_help(command):
     result = CliRunner().invoke(app, [*command.split(), "--help"])
     assert result.exit_code == 0 and "Usage" in result.output
+
+
+def test_the_detail_screen_really_has_the_buttons_the_mapping_claims():
+    from PySide6.QtWidgets import QApplication
+
+    QApplication.instance() or QApplication([])
+    from src.ui.views.timesheet_detail_view import TimesheetDetailView
+
+    view = TimesheetDetailView()
+    for attribute in ("edit_btn", "delete_entry_btn", "submit_btn", "delete_timesheet_btn"):
+        assert hasattr(view, attribute), f"GUI action missing: {attribute}"
 
 
 def test_the_gui_settings_theme_choices_are_settable_from_the_cli(monkeypatch, tmp_path):

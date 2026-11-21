@@ -105,7 +105,7 @@ class HomeView(QWidget):
         main = QVBoxLayout(self)
         main.setContentsMargins(30, 30, 30, 20)
         main.setSpacing(16)
-        bind_style(self, lambda: f"background-color: {_C['bg']};")
+        bind_style(self, lambda: f"HomeView {{ background-color: {_C['bg']}; }}")
 
         # Header row
         header_row = QHBoxLayout()

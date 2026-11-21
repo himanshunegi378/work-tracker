@@ -88,6 +88,7 @@ def normalize_time_log_row(raw_log: Dict[str, Any]) -> Dict[str, Any]:
 
     return {
         "name": raw_log.get("name"),
+        "idx": raw_log.get("idx"),
         "activity_type": raw_log.get("activity_type"),
         "project": raw_log.get("project"),
         "project_name": raw_log.get("project_name"),

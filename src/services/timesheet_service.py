@@ -12,6 +12,11 @@ from src.services.timesheet_parsing import (
     normalize_reportview_response,
     normalize_timesheet_detail_response,
 )
+from src.services.timesheet_edit import (
+    apply_time_log_changes,
+    ensure_editable,
+    remove_time_log,
+)
 from src.services.timesheet_shared import TimesheetAuthError, TimesheetServiceError
 from src.services.timesheet_smart_log import (
     apply_smart_log_update_to_doc,
@@ -61,6 +66,8 @@ class TimesheetService:
         self.reportview_endpoint = "/api/method/frappe.desk.reportview.get"
         self.getdoc_endpoint = "/api/method/frappe.desk.form.load.getdoc"
         self.save_endpoint = "/api/method/frappe.desk.form.save.savedocs"
+        self.transitions_endpoint = "/api/method/frappe.model.workflow.get_transitions"
+        self.apply_workflow_endpoint = "/api/method/frappe.model.workflow.apply_workflow"
 
     # Public service API
     def get_timesheets(
@@ -344,6 +351,102 @@ class TimesheetService:
             self._log_overlap_debug_context(exc, save_debug_context if "save_debug_context" in locals() else None)
             logger.error("Failed to save timesheet log: %s", exc)
             raise TimesheetServiceError(f"Failed to save timesheet log: {exc}") from exc
+
+    # ── changing existing timesheets ──────────────────────────────────────
+    def _modify_timesheet(self, name: str, mutate, csrf_token: Optional[str] = None) -> Dict[str, Any]:
+        """Fetch a timesheet, apply `mutate(doc, employee)`, save it (retrying once on a stale copy)."""
+        employee = self.auth_service.getSession()
+        if not employee:
+            raise TimesheetAuthError("No authenticated user is available for the timesheet employee filter.")
+        for attempt in (1, 2):
+            doc = self._get_raw_timesheet_doc(name, csrf_token=csrf_token)
+            mutate(doc, employee)
+            try:
+                response = self._post_timesheet_doc(doc, csrf_token=csrf_token)
+                return self._normalize_timesheet_detail_response(response.json())
+            except ApiClientError as exc:
+                if attempt == 1 and exc.exc_type == "TimestampMismatchError":
+                    logger.warning("Timestamp mismatch while changing %s; refetching and retrying once.", name)
+                    continue
+                logger.error("Failed to update timesheet %s: %s", name, exc)
+                raise TimesheetServiceError(f"Failed to update timesheet: {exc}") from exc
+        raise TimesheetServiceError("Failed to update timesheet.")  # pragma: no cover
+
+    def update_time_log(
+        self,
+        timesheet_name: str,
+        row_name: str,
+        csrf_token: Optional[str] = None,
+        **changes: Any,
+    ) -> Dict[str, Any]:
+        """Change one time-log row. Keyword changes: description, activity, project_id,
+        project_name, is_billable, from_time, to_time (datetimes)."""
+        if not timesheet_name or not row_name:
+            raise TimesheetServiceError("Updating a time log needs a timesheet and a row.")
+        return self._modify_timesheet(
+            timesheet_name,
+            lambda doc, employee: apply_time_log_changes(doc, row_name, employee, **changes),
+            csrf_token=csrf_token,
+        )
+
+    def delete_time_log(self, timesheet_name: str, row_name: str, csrf_token: Optional[str] = None) -> Dict[str, Any]:
+        """Remove one time-log row from a Pending draft."""
+        if not timesheet_name or not row_name:
+            raise TimesheetServiceError("Deleting a time log needs a timesheet and a row.")
+        return self._modify_timesheet(
+            timesheet_name,
+            lambda doc, employee: remove_time_log(doc, row_name, employee),
+            csrf_token=csrf_token,
+        )
+
+    def get_workflow_actions(self, name: str, csrf_token: Optional[str] = None) -> List[str]:
+        """Return the workflow actions (e.g. ["Submit"]) the current user may apply."""
+        try:
+            doc = self._get_raw_timesheet_doc(name, csrf_token=csrf_token)
+            response = self.api_client.post(
+                self.transitions_endpoint,
+                data=urllib.parse.urlencode({"doc": json.dumps(doc)}),
+                headers=self._build_headers(doctype="Timesheet", csrf_token=csrf_token, include_form_content_type=True),
+            )
+        except ApiClientError as exc:
+            raise TimesheetServiceError(f"Failed to read the workflow actions: {exc}") from exc
+        message = response.json().get("message") or []
+        return [str(t.get("action")) for t in message if isinstance(t, dict) and t.get("action")]
+
+    def submit_timesheet(self, name: str, csrf_token: Optional[str] = None) -> Dict[str, Any]:
+        """Apply the workflow's "Submit" action to a Pending draft."""
+        if not name:
+            raise TimesheetServiceError("Submitting needs a timesheet name.")
+        doc = self._get_raw_timesheet_doc(name, csrf_token=csrf_token)
+        ensure_editable(doc)
+        if not doc.get("time_logs"):
+            raise TimesheetServiceError(f"{name} has no time logs to submit.")
+        actions = self.get_workflow_actions(name, csrf_token=csrf_token)
+        if "Submit" not in actions:
+            available = ", ".join(actions) or "none"
+            raise TimesheetServiceError(f"{name} cannot be submitted by you right now (available actions: {available}).")
+        try:
+            response = self.api_client.post(
+                self.apply_workflow_endpoint,
+                data=urllib.parse.urlencode({"doc": json.dumps(doc), "action": "Submit"}),
+                headers=self._build_headers(doctype="Timesheet", csrf_token=csrf_token, include_form_content_type=True),
+            )
+        except ApiClientError as exc:
+            logger.error("Failed to submit timesheet %s: %s", name, exc)
+            raise TimesheetServiceError(f"Failed to submit timesheet: {exc}") from exc
+        updated = response.json().get("message")
+        return self._normalize_timesheet_detail_response({"docs": [updated]}) if isinstance(updated, dict) else self.get_timesheet_detail(name)
+
+    def delete_timesheet(self, name: str, csrf_token: Optional[str] = None) -> None:
+        """Delete a whole Pending draft timesheet."""
+        if not name:
+            raise TimesheetServiceError("Deleting needs a timesheet name.")
+        ensure_editable(self._get_raw_timesheet_doc(name, csrf_token=csrf_token))
+        try:
+            self.api_client.delete(f"/api/resource/Timesheet/{urllib.parse.quote(name, safe='')}")
+        except ApiClientError as exc:
+            logger.error("Failed to delete timesheet %s: %s", name, exc)
+            raise TimesheetServiceError(f"Failed to delete timesheet: {exc}") from exc
 
     def get_timesheet_detail(
         self,

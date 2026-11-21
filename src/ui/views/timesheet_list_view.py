@@ -131,7 +131,7 @@ class TimesheetListView(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(30, 30, 30, 20)
         main_layout.setSpacing(16)
-        bind_style(self, lambda: f"background-color: {_COLORS['bg']};")
+        bind_style(self, lambda: f"TimesheetListView {{ background-color: {_COLORS['bg']}; }}")
 
         header_row = QHBoxLayout()
 

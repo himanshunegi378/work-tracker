@@ -9,6 +9,7 @@ import typer
 
 from src.cli.commands._common import (
     ALL_OPTION, LIMIT_OPTION, PAGE_OPTION, day_total_hours, load_timesheet_for_day, logs_on_day,
+    fetch_timesheet, pick_entry, require_yes_or_terminal, resolve_timesheet,
 )
 from src.cli.commands.timesheets import _LOG_COLUMNS, _log_rows
 from src.cli.context import get_context
@@ -230,7 +231,7 @@ def list_(
     service = get_context(ctx).timesheets
 
     if timesheet:
-        detail = service.get_timesheet_detail(timesheet.strip())
+        detail = fetch_timesheet(service, timesheet)
         logs, label = detail.get("time_logs") or [], timesheet.strip()
     else:
         try:
@@ -252,3 +253,145 @@ def list_(
         return
     footer = f"{len(rows)} {'entry' if len(rows) == 1 else 'entries'} · {format_duration(round(total * 3600))} total"
     emit_data(rows, _LOG_COLUMNS, opts, footer=footer, quiet_key="name")
+
+
+# ── changing and removing entries ─────────────────────────────────────────
+def _entry_title(entry: Dict[str, Any], timesheet: str) -> str:
+    return f"entry #{entry.get('idx')} in {timesheet}"
+
+
+def _clock(value: Any) -> str:
+    return str(value or "")[11:16] or "-"
+
+
+def _confirm(opts: GlobalOptions, question: str, ask: bool) -> None:
+    if ask and not typer.confirm(question, default=True):
+        raise CliError("Nothing changed.", ERROR)
+
+
+@log_app.command("edit")
+@handle_errors
+def edit(
+    ctx: typer.Context,
+    entry: str = typer.Argument(..., metavar="ENTRY", help="Entry number from `log list` (the # column), or 'last'."),
+    description: Optional[str] = typer.Option(None, "-d", "--description", help="New description."),
+    activity: Optional[str] = typer.Option(None, "-a", "--activity", help="New activity type."),
+    project: Optional[str] = typer.Option(None, "-p", "--project", help="New project (id or name)."),
+    billable: Optional[bool] = typer.Option(None, "--billable/--no-billable", help="Change the billable flag."),
+    from_: Optional[str] = typer.Option(None, "--from", help=f"New start time on the entry's day ({dates.TIME_HELP})."),
+    to: Optional[str] = typer.Option(None, "--to", help=f"New end time on the entry's day ({dates.TIME_HELP})."),
+    timesheet: Optional[str] = typer.Option(None, "--timesheet", help="Timesheet name (default: the one covering --date)."),
+    on: Optional[str] = typer.Option(None, "--date", help=f"Day whose timesheet to use, default today ({dates.HELP})."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show the change without saving it."),
+) -> None:
+    """Change one entry of a Pending timesheet."""
+    opts: GlobalOptions = ctx.obj
+    if all(v is None for v in (description, activity, project, billable, from_, to)):
+        raise CliError("Nothing to change. Pass at least one of -d, -a, -p, --billable, --from, --to.", USAGE)
+
+    app = get_context(ctx)
+    detail = resolve_timesheet(app.timesheets, timesheet, on)
+    row = pick_entry(detail, entry)
+    day = str(row.get("from_time") or "")[:10]
+
+    changes: Dict[str, Any] = {}
+    shown = []  # (label, before, after)
+    if description is not None:
+        changes["description"] = description
+        shown.append(("Description", row.get("description"), description.strip()))
+    if activity is not None:
+        name = _resolve_activity(app.activities, activity)
+        changes["activity"] = name
+        shown.append(("Activity", row.get("activity_type"), name))
+    if project is not None:
+        project_id, project_name = _resolve_project(app.projects, project)
+        changes.update(project_id=project_id, project_name=project_name)
+        shown.append(("Project", f"{row.get('project')} · {row.get('project_name')}", f"{project_id} · {project_name}"))
+    if billable is not None:
+        changes["is_billable"] = billable
+        shown.append(("Billable", "yes" if row.get("is_billable") else "no", "yes" if billable else "no"))
+    for flag, text, key in (("--from", from_, "from_time"), ("--to", to, "to_time")):
+        if text is not None:
+            try:
+                clock = dates.parse_time(text)
+            except ValueError as exc:
+                raise CliError(f"{flag}: {exc}", USAGE)
+            if not day:
+                raise CliError("This entry has no date to attach the time to.", ERROR)
+            changes[key] = datetime.combine(date.fromisoformat(day), clock)
+    if "from_time" in changes or "to_time" in changes:
+        new_from = changes.get("from_time") or datetime.fromisoformat(str(row.get("from_time")))
+        new_to = changes.get("to_time") or datetime.fromisoformat(str(row.get("to_time")))
+        if new_to <= new_from:
+            raise CliError("The end time must be after the start time.", USAGE)
+        seconds = round((new_to - new_from).total_seconds())
+        shown.append((
+            "When",
+            f"{_clock(row.get('from_time'))} → {_clock(row.get('to_time'))}",
+            f"{new_from:%H:%M} → {new_to:%H:%M} ({format_duration(seconds)})",
+        ))
+
+    title = _entry_title(row, detail.get("name"))
+    summary = {"timesheet": detail.get("name"), "entry": row.get("idx"),
+               "changes": {label.lower(): {"from": str(a), "to": str(b)} for label, a, b in shown}}
+    preview = render_details([(label, f"{a}  →  {b}") for label, a, b in shown], opts.color)
+
+    if dry_run:
+        if opts.json_mode:
+            print(json.dumps({"dry_run": True, **summary}, indent=2, ensure_ascii=False))
+        else:
+            print(f"{title}\n{preview}")
+            success("Dry run: nothing was saved.", opts)
+        return
+
+    if _interactive() and not opts.yes and not opts.json_mode:
+        print(f"{title}\n{preview}", file=sys.stderr)
+        _confirm(opts, "Save this change?", True)
+
+    app.timesheets.update_time_log(detail["name"], row["name"], **changes)
+    _notify_desktop_app()
+    if opts.json_mode:
+        print(json.dumps({"updated": True, **summary}, indent=2, ensure_ascii=False))
+    else:
+        success(f"Updated {title}.", opts)
+
+
+@log_app.command("rm")
+@handle_errors
+def rm(
+    ctx: typer.Context,
+    entry: str = typer.Argument(..., metavar="ENTRY", help="Entry number from `log list` (the # column), or 'last'."),
+    timesheet: Optional[str] = typer.Option(None, "--timesheet", help="Timesheet name (default: the one covering --date)."),
+    on: Optional[str] = typer.Option(None, "--date", help=f"Day whose timesheet to use, default today ({dates.HELP})."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be deleted without deleting it."),
+) -> None:
+    """Delete one entry from a Pending timesheet."""
+    opts: GlobalOptions = ctx.obj
+    detail = resolve_timesheet(get_context(ctx).timesheets, timesheet, on)
+    row = pick_entry(detail, entry)
+    title = _entry_title(row, detail.get("name"))
+    description = (
+        f"{row.get('project_name') or row.get('project')} · {row.get('activity_type')} · "
+        f"{_clock(row.get('from_time'))}-{_clock(row.get('to_time'))} · {row.get('description')}"
+    )
+    summary = {"timesheet": detail.get("name"), "entry": row.get("idx"), "description": row.get("description")}
+
+    if dry_run:
+        if opts.json_mode:
+            print(json.dumps({"dry_run": True, **summary}, indent=2, ensure_ascii=False))
+        else:
+            print(f"Would delete {title}:\n  {description}")
+            success("Dry run: nothing was deleted.", opts)
+        return
+
+    ask = require_yes_or_terminal(opts, "Deleting an entry")
+    if ask:
+        print(f"Delete {title}:\n  {description}", file=sys.stderr)
+        _confirm(opts, "Delete it?", True)
+
+    updated = get_context(ctx).timesheets.delete_time_log(detail["name"], row["name"])
+    _notify_desktop_app()
+    if opts.json_mode:
+        print(json.dumps({"deleted": True, **summary, "total_hours": updated.get("total_hours")}, indent=2, ensure_ascii=False))
+    else:
+        success(f"Deleted {title}.", opts)

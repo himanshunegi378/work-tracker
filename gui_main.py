@@ -72,7 +72,10 @@ class MainWindow(QMainWindow):
         self.timesheet_presenter = TimesheetModulePresenter(
             self.container.timesheet_view,
             timesheet_service,
+            project_service=project_service,
+            activity_service=activity_service,
         )
+        self.timesheet_presenter.data_changed.connect(self._refresh_dashboard)
         self.container.sidebar.nav_requested.connect(self._handle_navigation)
         self.container.dash_view.tracker_toggle_requested.connect(self._handle_tracker_toggle)
 
