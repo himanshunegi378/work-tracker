@@ -20,34 +20,33 @@ from typing import Any, Dict
 
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QHBoxLayout
 from PySide6.QtCore import Qt
+from src.ui.design import bind_style, current as _t
 
-# ── Status badge colour mapping ───────────────────────────────────────────────
+# ── Status badge colour mapping (theme role names) ───────────────────────────────────────────────
 _STATUS_COLORS: Dict[str, str] = {
-    "open":      "#4CAF50",
-    "completed": "#2196F3",
-    "cancelled": "#9E9E9E",
+    "open":      "success",
+    "completed": "accent",
+    "cancelled": "text_muted",
 }
 
 _PRIORITY_COLORS: Dict[str, str] = {
-    "high":   "#F44336",
-    "medium": "#FF9800",
-    "low":    "#78909C",
+    "high":   "danger",
+    "medium": "warning",
+    "low":    "text_muted",
 }
 
 
-def _badge(text: str, color: str) -> QLabel:
+def _badge(text: str, color_role: str) -> QLabel:
     """Helper: create a small coloured pill label."""
     lbl = QLabel(text.upper())
-    lbl.setStyleSheet(
-        f"""
-        color: white;
-        background-color: {color};
+    bind_style(lbl, lambda: f"""
+        color: {_t().text_on_accent};
+        background-color: {getattr(_t(), color_role)};
         border-radius: 4px;
         padding: 2px 7px;
         font-size: 9px;
         font-weight: bold;
-        """
-    )
+        """)
     return lbl
 
 
@@ -61,20 +60,18 @@ class ProjectCard(QFrame):
 
     def _setup_ui(self) -> None:
         self.setFrameShape(QFrame.StyledPanel)
-        self.setStyleSheet(
-            """
-            ProjectCard {
-                background-color: #ffffff;
-                border: 1px solid #e0e0e0;
+        bind_style(self, lambda: f"""
+            ProjectCard {{
+                background-color: {_t().surface};
+                border: 1px solid {_t().border};
                 border-radius: 8px;
                 padding: 12px;
-            }
-            ProjectCard:hover {
-                border: 1px solid #2196F3;
-                background-color: #f5faff;
-            }
-            """
-        )
+            }}
+            ProjectCard:hover {{
+                border: 1px solid {_t().accent};
+                background-color: {_t().accent_soft};
+            }}
+            """)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(6)
@@ -83,15 +80,15 @@ class ProjectCard(QFrame):
         header = QHBoxLayout()
 
         name_lbl = QLabel(self.project.get("name") or "—")
-        name_lbl.setStyleSheet("font-weight: bold; font-size: 14px; color: #263238;")
+        bind_style(name_lbl, lambda: f"font-weight: bold; font-size: 14px; color: {_t().text};")
         header.addWidget(name_lbl)
         header.addStretch()
 
         status_raw  = (self.project.get("status") or "open").lower()
         priority_raw = (self.project.get("priority") or "medium").lower()
 
-        status_color   = _STATUS_COLORS.get(status_raw,   "#9E9E9E")
-        priority_color = _PRIORITY_COLORS.get(priority_raw, "#78909C")
+        status_color   = _STATUS_COLORS.get(status_raw,   "text_muted")
+        priority_color = _PRIORITY_COLORS.get(priority_raw, "text_muted")
 
         header.addWidget(_badge(status_raw,   status_color))
         header.addWidget(_badge(priority_raw, priority_color))
@@ -101,7 +98,7 @@ class ProjectCard(QFrame):
         pid = self.project.get("id") or ""
         if pid:
             id_lbl = QLabel(f"ID: {pid}")
-            id_lbl.setStyleSheet("font-size: 11px; color: #90A4AE;")
+            bind_style(id_lbl, lambda: f"font-size: 11px; color: {_t().text_muted};")
             layout.addWidget(id_lbl)
 
         # ── Row 3: Description ────────────────────────────────────────────────
@@ -109,12 +106,12 @@ class ProjectCard(QFrame):
         if desc:
             desc_lbl = QLabel(str(desc))
             desc_lbl.setWordWrap(True)
-            desc_lbl.setStyleSheet("color: #546E7A; font-size: 12px;")
+            bind_style(desc_lbl, lambda: f"color: {_t().text_secondary}; font-size: 12px;")
             layout.addWidget(desc_lbl)
 
         # ── Row 4: Active indicator ───────────────────────────────────────────
         is_active = self.project.get("is_active", True)
         if not is_active:
             inactive_lbl = QLabel("⚠ Inactive")
-            inactive_lbl.setStyleSheet("font-size: 11px; color: #FF9800;")
+            bind_style(inactive_lbl, lambda: f"font-size: 11px; color: {_t().warning};")
             layout.addWidget(inactive_lbl)

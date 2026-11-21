@@ -1,30 +1,35 @@
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+from src.ui.design import bind_style, current, manager
+from src.ui.icons import make_icon
+
 
 NAV_ITEMS = [
-    ("🏠", "HOME", "home"),
-    ("📁", "PROJECTS", "projects"),
-    ("⚡", "ACTIVITIES", "activities"),
-    ("⏱️", "TIMESHEETS", "timesheets"),
-    ("⚙️", "SETTINGS", "settings"),
+    ("home", "HOME", "home"),
+    ("projects", "PROJECTS", "projects"),
+    ("activities", "ACTIVITIES", "activities"),
+    ("timesheets", "TIMESHEETS", "timesheets"),
+    ("settings", "SETTINGS", "settings"),
 ]
 
 
-SAND_THEME = {
-    "rail_bg": "#F4EEE8",
-    "rail_border": "#E8DCC4",
-    "header_bg": "#EBDCCB",
-    "header_fg": "#8C6B5D",
-    "badge_bg": "#D97757",
-    "badge_fg": "#FDFBF7",
-    "item_fg": "#B09E8D",
-    "item_hover_bg": "#EBDCCB",
-    "item_hover_fg": "#C25E3D",
-    "item_active_fg": "#C25E3D",
-    "item_active_border": "#C25E3D",
-    "caption_fg": "#B09E8D",
-}
+class _Sand:
+    """Live view of the sidebar palette: always reflects the active theme."""
+
+    _MAP = {
+        "rail_bg": "rail_bg", "rail_border": "border", "item_fg": "text_muted",
+        "item_hover_bg": "rail_hover", "item_hover_fg": "rail_active",
+        "item_active_fg": "rail_active", "item_active_border": "rail_active",
+        "caption_fg": "text_muted", "header_bg": "rail_hover", "header_fg": "text_secondary",
+        "badge_bg": "accent", "badge_fg": "text_on_accent",
+    }
+
+    def __getitem__(self, key):
+        return getattr(current(), self._MAP[key])
+
+
+SAND_THEME = _Sand()
 
 
 class NavItemView(QFrame):
@@ -33,6 +38,7 @@ class NavItemView(QFrame):
     def __init__(self, icon: str, label: str, module_id: str, parent=None):
         super().__init__(parent)
         self.module_id = module_id
+        self.icon_name = icon
         self.setObjectName("navItem")
         self.setProperty("active", "false")
         self._setup_ui(icon, label)
@@ -57,13 +63,17 @@ class NavItemView(QFrame):
         halo_layout.setContentsMargins(4, 4, 4, 4)
         halo_layout.setSpacing(0)
 
-        self.button = QPushButton(icon)
+        self.button = QPushButton()
+        self.button.setIcon(make_icon(icon, SAND_THEME["item_fg"]))
+        self.button.setIconSize(QSize(24, 24))
         self.button.setObjectName("iconButton")
         self.button.setCheckable(False)
         self.button.setCursor(Qt.PointingHandCursor)
         self.button.setToolTip(label.title())
         self.button.setFixedSize(QSize(52, 52))
         self.button.clicked.connect(lambda: self.clicked.emit(self.module_id))
+        self._active = False
+        manager.changed.connect(lambda _t: self._refresh_icon())
 
         halo_layout.addStretch()
         halo_layout.addWidget(self.button)
@@ -77,12 +87,21 @@ class NavItemView(QFrame):
             self.clicked.emit(self.module_id)
         super().mousePressEvent(event)
 
+    def _refresh_icon(self):
+        try:
+            color = SAND_THEME["item_active_fg"] if self._active else SAND_THEME["item_fg"]
+            self.button.setIcon(make_icon(self.icon_name, color))
+        except RuntimeError:  # widget already deleted
+            pass
+
     def set_active(self, active: bool):
         active_value = str(active).lower()
         self.setProperty("active", active_value)
         self.body.setProperty("active", active_value)
         self.button.setProperty("active", active_value)
         self.halo.setProperty("active", active_value)
+        self._active = active
+        self._refresh_icon()
 
         for widget in (self, self.body, self.button, self.halo):
             self.style().unpolish(widget)
@@ -102,7 +121,7 @@ class SidebarView(QFrame):
     def _setup_ui(self):
         self.setObjectName("sidebarView")
         self.setFixedWidth(96)
-        self.setStyleSheet(self._build_stylesheet())
+        bind_style(self, self._build_stylesheet)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 12, 10, 12)

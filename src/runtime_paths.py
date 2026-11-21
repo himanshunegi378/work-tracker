@@ -55,16 +55,6 @@ def user_log_dir() -> Path:
     return base / APP_DIR_NAME / "logs"
 
 
-def projects_file_path() -> Path:
-    """Return the default writable path for offline project data."""
-    return user_data_dir() / "projects.json"
-
-
-def logs_file_path() -> Path:
-    """Return the default writable path for offline log data."""
-    return user_data_dir() / "logs.json"
-
-
 def log_file_path() -> Path:
     """Return the writable log file path for the packaged app."""
     return user_log_dir() / LOG_FILE_NAME

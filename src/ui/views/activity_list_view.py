@@ -30,40 +30,33 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.theme import COLORS, card_style
+from src.ui.design import bind_style, current as _t, label
 logger = logging.getLogger(__name__)
 
 # ── Style constants ───────────────────────────────────────────────────────────
-_COLORS = {
-    "bg": "#F5F7FA",
-    "card": "#FFFFFF",
-    "border": "#E0E0E0",
-    "primary": "#2196F3",
-    "primary_hover": "#1976D2",
-    "text_dark": "#263238",
-    "text_muted": "#78909C",
-    "success": "#4CAF50",
-    "danger": "#F44336",
-    "disabled": "#B0BEC5",
-}
+_COLORS = COLORS
 
-_INPUT_STYLE = f"""
+def _INPUT_STYLE() -> str:
+    return f"""
     QLineEdit {{
         padding: 8px 12px;
         border: 1px solid {_COLORS['border']};
         border-radius: 6px;
         font-size: 13px;
         color: {_COLORS['text_dark']};
-        background: white;
+        background: {_t().surface};
     }}
     QLineEdit:focus {{
         border: 1px solid {_COLORS['primary']};
     }}
 """
 
-_TABLE_STYLE = f"""
+def _TABLE_STYLE() -> str:
+    return f"""
     QTableWidget {{
         border: none;
-        background: white;
+        background: {_t().surface};
         gridline-color: {_COLORS['border']};
         font-size: 13px;
         color: {_COLORS['text_dark']};
@@ -72,11 +65,11 @@ _TABLE_STYLE = f"""
         padding: 8px 12px;
     }}
     QTableWidget::item:selected {{
-        background-color: #E3F2FD;
+        background-color: {_t().accent_soft};
         color: {_COLORS['text_dark']};
     }}
     QHeaderView::section {{
-        background-color: #ECEFF1;
+        background-color: {_t().surface_alt};
         color: {_COLORS['text_muted']};
         font-size: 11px;
         font-weight: bold;
@@ -87,10 +80,11 @@ _TABLE_STYLE = f"""
     }}
 """
 
-_BTN_STYLE = f"""
+def _BTN_STYLE() -> str:
+    return f"""
     QPushButton {{
         background-color: {_COLORS['primary']};
-        color: white;
+        color: {_t().text_on_accent};
         padding: 8px 18px;
         border: none;
         border-radius: 6px;
@@ -105,9 +99,10 @@ _BTN_STYLE = f"""
     }}
 """
 
-_NAV_BTN_STYLE = f"""
+def _NAV_BTN_STYLE() -> str:
+    return f"""
     QPushButton {{
-        background-color: white;
+        background-color: {_t().surface};
         color: {_COLORS['primary']};
         padding: 6px 14px;
         border: 1px solid {_COLORS['primary']};
@@ -116,12 +111,12 @@ _NAV_BTN_STYLE = f"""
         font-weight: 600;
     }}
     QPushButton:hover {{
-        background-color: #E3F2FD;
+        background-color: {_t().accent_soft};
     }}
     QPushButton:disabled {{
         color: {_COLORS['disabled']};
         border-color: {_COLORS['disabled']};
-        background-color: white;
+        background-color: {_t().surface};
     }}
 """
 
@@ -156,20 +151,17 @@ class ActivityListView(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(30, 30, 30, 20)
         main_layout.setSpacing(16)
-        self.setStyleSheet(f"background-color: {_COLORS['bg']};")
+        bind_style(self, lambda: f"background-color: {_COLORS['bg']};")
 
         # 1 ── Header row ──────────────────────────────────────────────────────
         header_row = QHBoxLayout()
 
-        header_lbl = QLabel("⚡ Activity Types")
-        header_lbl.setStyleSheet(
-            f"font-size: 22px; font-weight: bold; color: {_COLORS['text_dark']};"
-        )
+        header_lbl = label("Activity Types", "title")
         header_row.addWidget(header_lbl)
         header_row.addStretch()
 
         self.refresh_btn = QPushButton("↻  Refresh")
-        self.refresh_btn.setStyleSheet(_BTN_STYLE)
+        bind_style(self.refresh_btn, _BTN_STYLE)
         self.refresh_btn.setCursor(Qt.PointingHandCursor)
         self.refresh_btn.clicked.connect(self._on_refresh_clicked)
         header_row.addWidget(self.refresh_btn)
@@ -179,22 +171,15 @@ class ActivityListView(QWidget):
         # 2 ── Search bar ──────────────────────────────────────────────────────
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍  Search activity types…")
-        self.search_input.setStyleSheet(_INPUT_STYLE)
+        bind_style(self.search_input, _INPUT_STYLE)
         self.search_input.setFixedHeight(38)
         self.search_input.textChanged.connect(self._on_search_changed)
         main_layout.addWidget(self.search_input)
 
         # 3 ── Card frame containing table ────────────────────────────────────
         card = QFrame()
-        card.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: {_COLORS['card']};
-                border: 1px solid {_COLORS['border']};
-                border-radius: 10px;
-            }}
-            """
-        )
+        card.setObjectName("card")
+        bind_style(card, lambda: card_style("card"))
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(0)
@@ -202,7 +187,7 @@ class ActivityListView(QWidget):
         # Table
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["#", "Activity Name"])
-        self.table.setStyleSheet(_TABLE_STYLE)
+        bind_style(self.table, _TABLE_STYLE)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setAlternatingRowColors(True)
@@ -216,18 +201,14 @@ class ActivityListView(QWidget):
         # Loading overlay label (hidden by default)
         self.loading_lbl = QLabel("  Loading…")
         self.loading_lbl.setAlignment(Qt.AlignCenter)
-        self.loading_lbl.setStyleSheet(
-            f"color: {_COLORS['text_muted']}; font-size: 14px; padding: 30px;"
-        )
+        bind_style(self.loading_lbl, lambda: f"color: {_COLORS['text_muted']}; font-size: 14px; padding: 30px;")
         self.loading_lbl.hide()
         card_layout.addWidget(self.loading_lbl)
 
         # Empty state label (hidden until data arrives)
         self.empty_lbl = QLabel("No activity types found.")
         self.empty_lbl.setAlignment(Qt.AlignCenter)
-        self.empty_lbl.setStyleSheet(
-            f"color: {_COLORS['text_muted']}; font-size: 13px; padding: 40px;"
-        )
+        bind_style(self.empty_lbl, lambda: f"color: {_COLORS['text_muted']}; font-size: 13px; padding: 40px;")
         self.empty_lbl.hide()
         card_layout.addWidget(self.empty_lbl)
 
@@ -238,19 +219,19 @@ class ActivityListView(QWidget):
         pagination_row.setSpacing(10)
 
         self.prev_btn = QPushButton("← Prev")
-        self.prev_btn.setStyleSheet(_NAV_BTN_STYLE)
+        bind_style(self.prev_btn, _NAV_BTN_STYLE)
         self.prev_btn.setCursor(Qt.PointingHandCursor)
         self.prev_btn.setEnabled(False)
         self.prev_btn.clicked.connect(self._on_prev_clicked)
         pagination_row.addWidget(self.prev_btn)
 
         self.page_lbl = QLabel("Page 1")
-        self.page_lbl.setStyleSheet(f"font-size: 12px; color: {_COLORS['text_muted']};")
+        bind_style(self.page_lbl, lambda: f"font-size: 12px; color: {_COLORS['text_muted']};")
         self.page_lbl.setAlignment(Qt.AlignCenter)
         pagination_row.addWidget(self.page_lbl)
 
         self.next_btn = QPushButton("Next →")
-        self.next_btn.setStyleSheet(_NAV_BTN_STYLE)
+        bind_style(self.next_btn, _NAV_BTN_STYLE)
         self.next_btn.setCursor(Qt.PointingHandCursor)
         self.next_btn.setEnabled(False)
         self.next_btn.clicked.connect(self._on_next_clicked)
@@ -259,9 +240,7 @@ class ActivityListView(QWidget):
         pagination_row.addStretch()
 
         self.result_count_lbl = QLabel("")
-        self.result_count_lbl.setStyleSheet(
-            f"font-size: 12px; color: {_COLORS['text_muted']};"
-        )
+        bind_style(self.result_count_lbl, lambda: f"font-size: 12px; color: {_COLORS['text_muted']};")
         pagination_row.addWidget(self.result_count_lbl)
 
         main_layout.addLayout(pagination_row)

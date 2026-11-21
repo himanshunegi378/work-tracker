@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItemModel, QStandardItem
+from src.ui.design import bind_style, current as _t
 
 
 class SmartLogDialog(QDialog):
@@ -18,7 +19,6 @@ class SmartLogDialog(QDialog):
 
     Args:
         project_names: List of project name strings (from HomePresenter cache).
-        lm:            LogManager for reading the last log and saving new ones.
         parent:        Parent widget (pass None to allow display when minimized).
     """
 
@@ -53,7 +53,7 @@ class SmartLogDialog(QDialog):
         layout.setSpacing(15)
 
         title = QLabel("What are you working on?")
-        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #333;")
+        bind_style(title, lambda: f"font-size: 16px; font-weight: bold; color: {_t().text};")
         layout.addWidget(title)
 
         form = QFormLayout()
@@ -110,11 +110,11 @@ class SmartLogDialog(QDialog):
 
         if self._activity_status_message:
             self.status_label.setText(self._activity_status_message)
-            self.status_label.setStyleSheet("color: #C62828; font-size: 12px;")
+            bind_style(self.status_label, lambda: f"color: {_t().danger}; font-size: 12px;")
             self.status_label.show()
         elif not self._activity_names:
             self.status_label.setText("Activity options are unavailable right now.")
-            self.status_label.setStyleSheet("color: #C62828; font-size: 12px;")
+            bind_style(self.status_label, lambda: f"color: {_t().danger}; font-size: 12px;")
             self.status_label.show()
 
         # Action buttons
@@ -124,15 +124,15 @@ class SmartLogDialog(QDialog):
 
         self.save_btn = QPushButton("Start Working" if self._is_initial else "Log Activity")
         self.save_btn.setDefault(True)
-        self.save_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
+        bind_style(self.save_btn, lambda: f"""
+            QPushButton {{
+                background-color: {_t().success};
+                color: {_t().text_on_accent};
                 font-weight: bold;
                 padding: 8px 15px;
                 border-radius: 4px;
-            }
-            QPushButton:hover { background-color: #45a049; }
+            }}
+            QPushButton:hover {{ background-color: {_t().success_hover}; }}
         """)
         self.save_btn.clicked.connect(self._on_save)
         self.save_btn.setEnabled(bool(self._activity_names))
@@ -325,5 +325,5 @@ class SmartLogDialog(QDialog):
     def set_error_message(self, message: str) -> None:
         """Show a save/fetch error message in the dialog footer."""
         self.status_label.setText(message)
-        self.status_label.setStyleSheet("color: #C62828; font-size: 12px;")
+        bind_style(self.status_label, lambda: f"color: {_t().danger}; font-size: 12px;")
         self.status_label.show()

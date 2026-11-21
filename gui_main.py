@@ -1,20 +1,19 @@
 import sys
-import os
 import logging
 from pathlib import Path
 from typing import Optional
-from logging.handlers import RotatingFileHandler
 from PySide6.QtWidgets import QApplication, QMainWindow
 from PySide6.QtCore import QMetaObject, Qt, Slot, QThreadPool
 
-from src.api import ApiClient
-from src.persistence.credential_storage import CredentialStorage
-from src.runtime_paths import ensure_runtime_dirs, log_file_path
+from src.core.app import build_app
+from src.core.logging_setup import configure_logging
+from src.runtime_paths import ensure_runtime_dirs
 from src.services.activity_service import ActivityService
 from src.services.auth_service import AuthService
 from src.services.project_service import ProjectService
 from src.services.scheduler import CronScheduler
 from src.services.timesheet_service import TimesheetService
+from src.ui.design import apply_theme
 from src.ui.activity_list_presenter import ActivityListPresenter
 from src.ui.home_presenter import HomePresenter
 from src.ui.settings_presenter import SettingsPresenter
@@ -25,37 +24,6 @@ from src.ui.workers.smart_log_options_fetch_worker import SmartLogOptionsFetchWo
 from src.ui.workers.smart_log_save_worker import SmartLogSaveWorker
 
 logger = logging.getLogger(__name__)
-
-
-def configure_logging(log_path: Optional[Path] = None) -> str:
-    """Configure app logging to a rotating file for later analysis."""
-    resolved_log_path = Path(log_path or log_file_path())
-    resolved_log_path.parent.mkdir(parents=True, exist_ok=True)
-
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-
-    if not any(
-        isinstance(handler, RotatingFileHandler)
-        and getattr(handler, "baseFilename", "") == str(resolved_log_path.resolve())
-        for handler in root_logger.handlers
-    ):
-        file_handler = RotatingFileHandler(
-            resolved_log_path,
-            maxBytes=1_000_000,
-            backupCount=3,
-            encoding="utf-8",
-        )
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s %(levelname)s [%(name)s] %(message)s"
-            )
-        )
-        root_logger.addHandler(file_handler)
-
-    logger.info("Application logging configured at %s", resolved_log_path.resolve())
-    return str(resolved_log_path)
 
 
 class MainWindow(QMainWindow):
@@ -242,20 +210,16 @@ def main():
     log_path = configure_logging()
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    apply_theme(app)
 
-    # Initialize API and Auth / Service Layer
-    api_client       = ApiClient(base_url="https://matrix.samta.ai")
-    cred_storage     = CredentialStorage()
-    auth_service     = AuthService(api_client, cred_storage)
-    project_service  = ProjectService(api_client)
-    activity_service = ActivityService(api_client)
-    timesheet_service = TimesheetService(api_client, auth_service)
+    # Shared service graph (same wiring the CLI uses)
+    ctx = build_app()
 
     window = MainWindow(
-        auth_service,
-        project_service,
-        activity_service,
-        timesheet_service,
+        ctx.auth,
+        ctx.projects,
+        ctx.activities,
+        ctx.timesheets,
     )
     window.show()
     logger.info("Main window launched; analysis log file: %s", Path(log_path).resolve())

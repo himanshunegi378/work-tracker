@@ -21,21 +21,15 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-_COLORS = {
-    "bg": "#F5F7FA",
-    "card": "#FFFFFF",
-    "border": "#E0E0E0",
-    "primary": "#2196F3",
-    "primary_hover": "#1976D2",
-    "text_dark": "#263238",
-    "text_muted": "#78909C",
-    "disabled": "#B0BEC5",
-}
+from src.ui.theme import COLORS, card_style
+from src.ui.design import bind_style, current as _t
+_COLORS = COLORS
 
-_BTN_STYLE = f"""
+def _BTN_STYLE() -> str:
+    return f"""
     QPushButton {{
         background-color: {_COLORS['primary']};
-        color: white;
+        color: {_t().text_on_accent};
         padding: 8px 18px;
         border: none;
         border-radius: 6px;
@@ -50,16 +44,17 @@ _BTN_STYLE = f"""
     }}
 """
 
-_TABLE_STYLE = f"""
+def _TABLE_STYLE() -> str:
+    return f"""
     QTableWidget {{
         border: none;
-        background: white;
+        background: {_t().surface};
         gridline-color: {_COLORS['border']};
         font-size: 13px;
         color: {_COLORS['text_dark']};
     }}
     QHeaderView::section {{
-        background-color: #ECEFF1;
+        background-color: {_t().surface_alt};
         color: {_COLORS['text_muted']};
         font-size: 11px;
         font-weight: bold;
@@ -84,32 +79,23 @@ class TimesheetDetailView(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(30, 30, 30, 20)
         main_layout.setSpacing(16)
-        self.setStyleSheet(f"background-color: {_COLORS['bg']};")
+        bind_style(self, lambda: f"background-color: {_COLORS['bg']};")
 
         header_row = QHBoxLayout()
         self.back_btn = QPushButton("← Back")
-        self.back_btn.setStyleSheet(_BTN_STYLE)
+        bind_style(self.back_btn, _BTN_STYLE)
         self.back_btn.clicked.connect(self.back_requested.emit)
         header_row.addWidget(self.back_btn)
 
         self.title_lbl = QLabel("Timesheet Detail")
-        self.title_lbl.setStyleSheet(
-            f"font-size: 22px; font-weight: bold; color: {_COLORS['text_dark']};"
-        )
+        bind_style(self.title_lbl, lambda: f"font-size: 22px; font-weight: bold; color: {_COLORS['text_dark']};")
         header_row.addWidget(self.title_lbl)
         header_row.addStretch()
         main_layout.addLayout(header_row)
 
         summary_card = QFrame()
-        summary_card.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: {_COLORS['card']};
-                border: 1px solid {_COLORS['border']};
-                border-radius: 10px;
-            }}
-            """
-        )
+        summary_card.setObjectName("summary_card")
+        bind_style(summary_card, lambda: card_style("summary_card"))
         summary_layout = QGridLayout(summary_card)
         summary_layout.setContentsMargins(16, 16, 16, 16)
         summary_layout.setHorizontalSpacing(18)
@@ -132,9 +118,9 @@ class TimesheetDetailView(QWidget):
             row = index // 2
             col = (index % 2) * 2
             label = QLabel(f"{label_text}:")
-            label.setStyleSheet(f"font-size: 12px; color: {_COLORS['text_muted']};")
+            bind_style(label, lambda: f"font-size: 12px; color: {_COLORS['text_muted']};")
             value = QLabel("—")
-            value.setStyleSheet(f"font-size: 13px; color: {_COLORS['text_dark']};")
+            bind_style(value, lambda: f"font-size: 13px; color: {_COLORS['text_dark']};")
             value.setWordWrap(True)
             summary_layout.addWidget(label, row, col)
             summary_layout.addWidget(value, row, col + 1)
@@ -143,15 +129,8 @@ class TimesheetDetailView(QWidget):
         main_layout.addWidget(summary_card)
 
         logs_card = QFrame()
-        logs_card.setStyleSheet(
-            f"""
-            QFrame {{
-                background-color: {_COLORS['card']};
-                border: 1px solid {_COLORS['border']};
-                border-radius: 10px;
-            }}
-            """
-        )
+        logs_card.setObjectName("logs_card")
+        bind_style(logs_card, lambda: card_style("logs_card"))
         logs_layout = QVBoxLayout(logs_card)
         logs_layout.setContentsMargins(0, 0, 0, 0)
         logs_layout.setSpacing(0)
@@ -160,7 +139,7 @@ class TimesheetDetailView(QWidget):
         self.time_logs_table.setHorizontalHeaderLabels(
             ["Activity", "Project", "From", "To", "Hours", "Billable", "Description"]
         )
-        self.time_logs_table.setStyleSheet(_TABLE_STYLE)
+        bind_style(self.time_logs_table, _TABLE_STYLE)
         self.time_logs_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.time_logs_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.time_logs_table.verticalHeader().setVisible(False)
@@ -172,17 +151,13 @@ class TimesheetDetailView(QWidget):
 
         self.loading_lbl = QLabel("  Loading…")
         self.loading_lbl.setAlignment(Qt.AlignCenter)
-        self.loading_lbl.setStyleSheet(
-            f"color: {_COLORS['text_muted']}; font-size: 14px; padding: 30px;"
-        )
+        bind_style(self.loading_lbl, lambda: f"color: {_COLORS['text_muted']}; font-size: 14px; padding: 30px;")
         self.loading_lbl.hide()
         logs_layout.addWidget(self.loading_lbl)
 
         self.empty_lbl = QLabel("No time logs found.")
         self.empty_lbl.setAlignment(Qt.AlignCenter)
-        self.empty_lbl.setStyleSheet(
-            f"color: {_COLORS['text_muted']}; font-size: 13px; padding: 40px;"
-        )
+        bind_style(self.empty_lbl, lambda: f"color: {_COLORS['text_muted']}; font-size: 13px; padding: 40px;")
         self.empty_lbl.hide()
         logs_layout.addWidget(self.empty_lbl)
 

@@ -27,38 +27,33 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.ui.theme import COLORS, card_style
 from src.ui.views.project_card_view import ProjectCard
+from src.ui.design import bind_style, current as _t, label
 
 logger = logging.getLogger(__name__)
 
 # ── Shared style tokens ───────────────────────────────────────────────────────
-_C = {
-    "bg":           "#F5F7FA",
-    "card":         "#FFFFFF",
-    "border":       "#E0E0E0",
-    "primary":      "#2196F3",
-    "primary_hov":  "#1976D2",
-    "text_dark":    "#263238",
-    "text_muted":   "#78909C",
-    "disabled":     "#B0BEC5",
-}
+_C = COLORS
 
-_INPUT_STYLE = f"""
+def _INPUT_STYLE() -> str:
+    return f"""
     QLineEdit {{
         padding: 8px 12px;
         border: 1px solid {_C['border']};
         border-radius: 6px;
         font-size: 13px;
         color: {_C['text_dark']};
-        background: white;
+        background: {_t().surface};
     }}
     QLineEdit:focus {{ border: 1px solid {_C['primary']}; }}
 """
 
-_BTN_STYLE = f"""
+def _BTN_STYLE() -> str:
+    return f"""
     QPushButton {{
         background-color: {_C['primary']};
-        color: white;
+        color: {_t().text_on_accent};
         padding: 8px 18px;
         border: none;
         border-radius: 6px;
@@ -69,9 +64,10 @@ _BTN_STYLE = f"""
     QPushButton:disabled {{ background-color: {_C['disabled']}; }}
 """
 
-_NAV_BTN = f"""
+def _NAV_BTN() -> str:
+    return f"""
     QPushButton {{
-        background-color: white;
+        background-color: {_t().surface};
         color: {_C['primary']};
         padding: 6px 14px;
         border: 1px solid {_C['primary']};
@@ -79,8 +75,8 @@ _NAV_BTN = f"""
         font-size: 12px;
         font-weight: 600;
     }}
-    QPushButton:hover {{ background-color: #E3F2FD; }}
-    QPushButton:disabled {{ color: {_C['disabled']}; border-color: {_C['disabled']}; background: white; }}
+    QPushButton:hover {{ background-color: {_t().accent_soft}; }}
+    QPushButton:disabled {{ color: {_C['disabled']}; border-color: {_C['disabled']}; background: {_t().surface}; }}
 """
 
 
@@ -109,17 +105,16 @@ class HomeView(QWidget):
         main = QVBoxLayout(self)
         main.setContentsMargins(30, 30, 30, 20)
         main.setSpacing(16)
-        self.setStyleSheet(f"background-color: {_C['bg']};")
+        bind_style(self, lambda: f"background-color: {_C['bg']};")
 
         # Header row
         header_row = QHBoxLayout()
-        title = QLabel("📁 Projects")
-        title.setStyleSheet(f"font-size: 22px; font-weight: bold; color: {_C['text_dark']};")
+        title = label("Projects", "title")
         header_row.addWidget(title)
         header_row.addStretch()
 
         self.refresh_btn = QPushButton("↻  Refresh")
-        self.refresh_btn.setStyleSheet(_BTN_STYLE)
+        bind_style(self.refresh_btn, _BTN_STYLE)
         self.refresh_btn.setCursor(Qt.PointingHandCursor)
         self.refresh_btn.clicked.connect(self._on_refresh)
         header_row.addWidget(self.refresh_btn)
@@ -128,20 +123,15 @@ class HomeView(QWidget):
         # Search bar
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍  Search projects…")
-        self.search_input.setStyleSheet(_INPUT_STYLE)
+        bind_style(self.search_input, _INPUT_STYLE)
         self.search_input.setFixedHeight(38)
         self.search_input.textChanged.connect(self._on_search_changed)
         main.addWidget(self.search_input)
 
         # Card frame with scroll area
         card = QFrame()
-        card.setStyleSheet(
-            f"""QFrame {{
-                background-color: {_C['card']};
-                border: 1px solid {_C['border']};
-                border-radius: 10px;
-            }}"""
-        )
+        card.setObjectName("card")
+        bind_style(card, lambda: card_style("card"))
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(12, 12, 12, 12)
         card_layout.setSpacing(10)
@@ -160,18 +150,14 @@ class HomeView(QWidget):
         # Loading label (hidden by default)
         self.loading_lbl = QLabel("  Loading…")
         self.loading_lbl.setAlignment(Qt.AlignCenter)
-        self.loading_lbl.setStyleSheet(
-            f"color: {_C['text_muted']}; font-size: 14px; padding: 30px;"
-        )
+        bind_style(self.loading_lbl, lambda: f"color: {_C['text_muted']}; font-size: 14px; padding: 30px;")
         self.loading_lbl.hide()
         card_layout.addWidget(self.loading_lbl)
 
         # Empty state label
         self.empty_lbl = QLabel("No projects found.")
         self.empty_lbl.setAlignment(Qt.AlignCenter)
-        self.empty_lbl.setStyleSheet(
-            f"color: {_C['text_muted']}; font-size: 13px; padding: 40px;"
-        )
+        bind_style(self.empty_lbl, lambda: f"color: {_C['text_muted']}; font-size: 13px; padding: 40px;")
         self.empty_lbl.hide()
         card_layout.addWidget(self.empty_lbl)
 
@@ -180,23 +166,23 @@ class HomeView(QWidget):
         # Pagination bar
         pag = QHBoxLayout()
         self.prev_btn = QPushButton("← Prev")
-        self.prev_btn.setStyleSheet(_NAV_BTN)
+        bind_style(self.prev_btn, _NAV_BTN)
         self.prev_btn.setCursor(Qt.PointingHandCursor)
         self.prev_btn.setEnabled(False)
         self.prev_btn.clicked.connect(self._on_prev)
 
         self.page_lbl = QLabel("Page 1")
-        self.page_lbl.setStyleSheet(f"font-size: 12px; color: {_C['text_muted']};")
+        bind_style(self.page_lbl, lambda: f"font-size: 12px; color: {_C['text_muted']};")
         self.page_lbl.setAlignment(Qt.AlignCenter)
 
         self.next_btn = QPushButton("Next →")
-        self.next_btn.setStyleSheet(_NAV_BTN)
+        bind_style(self.next_btn, _NAV_BTN)
         self.next_btn.setCursor(Qt.PointingHandCursor)
         self.next_btn.setEnabled(False)
         self.next_btn.clicked.connect(self._on_next)
 
         self.count_lbl = QLabel("")
-        self.count_lbl.setStyleSheet(f"font-size: 12px; color: {_C['text_muted']};")
+        bind_style(self.count_lbl, lambda: f"font-size: 12px; color: {_C['text_muted']};")
 
         pag.addWidget(self.prev_btn)
         pag.addWidget(self.page_lbl)
