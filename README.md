@@ -26,7 +26,7 @@ Standalone bundles can be built with PyInstaller, see [docs/packaging.md](docs/p
 
 ### Debian / Ubuntu
 
-Download `worktracker-ubuntu.deb` (from the `artifacts` branch or a workflow run) and install it. This
+Download `worktracker-ubuntu.deb` (from the `latest` GitHub Release or a workflow run) and install it. This
 also puts `samta-tracker` on your PATH. Installing a newer `.deb` upgrades in place.
 
 ```bash

@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - artifacts/desktop/**
 
 concurrency:
   group: build-desktop-${{ github.ref }}
@@ -152,85 +150,41 @@ jobs:
 
   publish-artifacts:
     if: ${{ github.actor != 'github-actions[bot]' }}
-    name: Publish Latest Artifacts
+    name: Publish Latest Release
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Prepare artifacts branch
-        shell: bash
-        run: |
-          if git ls-remote --exit-code --heads origin artifacts; then
-            git fetch origin artifacts
-            git switch --force-create artifacts --track origin/artifacts
-          else
-            git switch --orphan artifacts
-            git rm -rf . >/dev/null 2>&1 || true
-            git clean -fdx
-          fi
-
       - name: Download .deb artifact
         uses: actions/download-artifact@v4
         with:
           name: worktracker-deb
-          path: tmp-artifacts/deb
+          path: tmp-artifacts
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
           name: worktracker-windows
-          path: tmp-artifacts/windows
+          path: tmp-artifacts
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
           name: worktracker-macos
-          path: tmp-artifacts/macos
+          path: tmp-artifacts
 
-      - name: Update tracked artifact folder
+      # Binaries live in a rolling "latest" GitHub Release, not in git history,
+      # so cloning the repo stays small.
+      - name: Publish to the rolling "latest" release
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          mkdir -p artifacts/desktop
-          rm -f artifacts/desktop/worktracker-ubuntu.tar.gz  # no longer published; clears the old file
-          rm -f artifacts/desktop/worktracker-ubuntu.deb
-          rm -f artifacts/desktop/worktracker-windows.zip
-          rm -f artifacts/desktop/worktracker-macos.zip
-          cp tmp-artifacts/deb/worktracker-ubuntu.deb artifacts/desktop/worktracker-ubuntu.deb
-          cp tmp-artifacts/windows/worktracker-windows.zip artifacts/desktop/worktracker-windows.zip
-          cp tmp-artifacts/macos/worktracker-macos.zip artifacts/desktop/worktracker-macos.zip
-          cat <<'EOF' > artifacts/desktop/README.md
-          # Desktop Downloads
-
-          This folder contains the latest successful desktop build archives published from the `main` branch CI workflow onto the `artifacts` branch.
-
-          ## Files
-          - `worktracker-ubuntu.deb`: Latest Debian/Ubuntu package (`sudo apt install ./worktracker-ubuntu.deb`)
-          - `worktracker-windows.zip`: Latest Windows desktop bundle
-          - `worktracker-macos.zip`: Latest macOS app bundle archive
-
-          ## Notes
-          - These files are replaced on each successful push to `main`.
-          - GitHub Actions run artifacts are still available from the workflow run summary page.
-          - macOS builds are unsigned in this setup.
-          EOF
-
-      - name: Commit published artifacts
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add artifacts/desktop
-
-          if git diff --cached --quiet; then
-            echo "No artifact changes to commit."
-            exit 0
+          notes="Latest successful desktop build from \`main\` (${GITHUB_SHA::7}). Unsigned. Replaced on every push to \`main\`."
+          if gh release view latest >/dev/null 2>&1; then
+            gh release edit latest --notes "$notes" --target "$GITHUB_SHA"
+          else
+            gh release create latest --title "Latest desktop build" --notes "$notes" --target "$GITHUB_SHA"
           fi
-
-          git commit -m "chore: publish latest desktop artifacts [skip ci]"
-          git push origin artifacts
+          gh release upload latest --clobber tmp-artifacts/*
