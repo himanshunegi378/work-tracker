@@ -44,3 +44,32 @@ def run_list(
             print(f"No {noun} found.", file=sys.stderr)
         return
     emit_data(result.rows, columns, opts, footer=paging.footer(result, noun), quiet_key=quiet_key)
+
+
+def load_timesheet_for_day(service, iso_day: str) -> Dict[str, Any]:
+    """Return the detail of the timesheet whose range covers `iso_day`."""
+    from src.cli.errors import ERROR
+
+    found = service.get_timesheets(page_length=1, covering_date=iso_day)
+    if not found:
+        raise CliError(
+            f"No timesheet covers {iso_day}.", ERROR,
+            hint="Use `samta-tracker timesheets list` to see your timesheets.",
+        )
+    return service.get_timesheet_detail(found[0]["name"])
+
+
+def logs_on_day(detail: Dict[str, Any], iso_day: str) -> List[Dict[str, Any]]:
+    """The detail's time-log rows that start on `iso_day`."""
+    return [log for log in detail.get("time_logs") or [] if str(log.get("from_time") or "").startswith(iso_day)]
+
+
+def day_total_hours(detail: Dict[str, Any], iso_day: str) -> float:
+    """Hours logged on `iso_day`.
+
+    Row hours are stored rounded to 2 decimals by the server, while the
+    timesheet total is exact; a one-day timesheet's total is therefore better.
+    """
+    if str(detail.get("start_date")) == iso_day == str(detail.get("end_date")) and detail.get("total_hours") is not None:
+        return float(detail["total_hours"])
+    return sum(float(log.get("hours") or 0) for log in logs_on_day(detail, iso_day))

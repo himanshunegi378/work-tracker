@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import typer
 
-from src.cli.commands._common import ALL_OPTION, LIMIT_OPTION, PAGE_OPTION, run_list
+from src.cli.commands._common import ALL_OPTION, LIMIT_OPTION, PAGE_OPTION, day_total_hours, load_timesheet_for_day, logs_on_day, run_list
 from src.cli.context import get_context
 from src.cli.errors import ERROR, USAGE, CliError, handle_errors
 from src.cli.output import GlobalOptions, emit_data, render_details
@@ -144,13 +144,9 @@ def today(
     iso = day.isoformat()
     service = get_context(ctx).timesheets
 
-    found = service.get_timesheets(page_length=1, covering_date=iso)
-    if not found:
-        raise CliError(f"No timesheet covers {iso}.", ERROR, hint="Use `samta-tracker timesheets list` to see your timesheets.")
-    detail = service.get_timesheet_detail(found[0]["name"])
-
-    day_logs = [log for log in detail.get("time_logs") or [] if str(log.get("from_time") or "").startswith(iso)]
-    hours = round(sum(float(log.get("hours") or 0) for log in day_logs), 2)
+    detail = load_timesheet_for_day(service, iso)
+    day_logs = logs_on_day(detail, iso)
+    hours = round(day_total_hours(detail, iso), 4)
 
     if opts.json_mode:
         print(json.dumps({"date": iso, "hours_on_date": hours, "timesheet": detail},

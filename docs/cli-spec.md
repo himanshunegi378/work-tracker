@@ -45,15 +45,21 @@ Dates accept `YYYY-MM-DD`, `today`, `yesterday`, `tomorrow`, `-7d`, `+3d`, `-2w`
 `timesheets today` finds the timesheet whose range covers the date, shows the day's logs and the hours logged that day; exit 1 if none covers it.
 Time-log tables shorten the description to the terminal width; `--json` is never truncated.
 
-### Log time (same behaviour as the GUI Smart Log)
+### Log time (same save logic as the GUI Smart Log)
 ```
 samta-tracker log add -p PROJ-0012 -a "Development" -d "Fixed invoice rounding"
-                [--duration 1h30m] [--billable | --no-billable] [--date YYYY-MM-DD] [--recent]
-samta-tracker log list [--timesheet NAME | --today]
+                      [--duration 1h30m] [--billable | --no-billable]
+                      [--date DATE --at TIME] [--recent] [--dry-run]
+samta-tracker log list [--date DATE | --timesheet NAME]
 ```
-- Missing `-p/-a/-d` are prompted. `--recent` picks from recent project/activity pairs.
-- Without `--duration`, the interval is the time since the last log (as in the GUI).
-- If the GUI is open, the CLI tells it to refresh its dashboard after a save.
+- `-p` and `-a` accept an id or name (case-insensitive); an ambiguous match lists the candidates and asks for the exact one. Missing `-p/-a/-d` are prompted in a terminal; without a terminal they are usage errors (exit 2).
+- **Timing:** a new entry starts one second after your previous entry that day and ends at the end time. With no previous entry that day it ends now and is `--duration` long (default: the `interval` setting, 15m). With `--duration`, the entry starts right after your previous one and runs that long (it must not end in the future). `--at TIME` fixes the end time and needs `--duration`. `--date` for a past day needs `--at` and `--duration`; future dates are rejected. If your previous entry forces a different length than `--duration`, the preview says so.
+- **Merging:** an entry with the same project, activity, description and billing as your previous one extends it instead of adding a row (the preview says "extends your previous entry").
+- `--billable/--no-billable` default to your last entry's value for the same project and activity, else no. `--recent` picks a recent project/activity pair (terminal only).
+- **Safety:** `--dry-run` prints exactly what would be saved and saves nothing. In a terminal the entry is shown and confirmed (`Save this entry? [Y/n]`); `-y` skips confirmations. The server rejects overlapping entries.
+- Output: `✓ Logged 1h on PROJ-0007 / Execution in TS-2026-07228 (total today: 4h)`. `--json` returns the saved summary.
+- `log list` shows entries for a day (default today) or for a whole timesheet, with a total. Tables show times to the minute; `--json` carries the raw server values. The server stores each row's hours to 2 decimals, so row hours can differ slightly from the exact timesheet total.
+- Later: `log edit`, `log rm`.
 
 ### Tracker control (talks to the GUI)
 | Command | Flags | Behaviour |
@@ -97,7 +103,7 @@ python gui_main.py            # or: work-tracker-gui
 0. **Foundation** (done): `src/core` (`build_app()` shared wiring, logging), `src/cli` skeleton (global flags, output helpers, exit codes), `pyproject.toml` with the `samta-tracker` entry point, GUI refactored onto the core, old CLI removed.
 1. **Auth and config** (done): `login`, `logout`, `auth status`, `config get|set` (url, theme, interval), shared preferences file. The session cookies are stored in the OS keyring (`SessionStore`) so the GUI and the CLI share one server-side session; without a keyring each side logs in on its own.
 2. **Read commands** (done): `projects list|view`, `activities list`, `timesheets list|view|today`, with paging, `--all`, filters and relative dates.
-3. **Log time**: `log add` (flags, prompts, `--recent`, `--duration`) and `log list`.
+3. **Log time** (done): `log add` (flags, prompts, `--recent`, `--duration`, `--at`, `--dry-run`) and `log list`.
 4. **GUI tracker control**: single instance, local socket protocol, tray icon, `--hidden`, shared reminder interval.
 5. **Tracker commands**: `start`, `stop`, `status`, `gui`, `remind` fallback, `data.refresh` after CLI saves.
 6. **Parity, packaging and extras**: GUI/CLI parity test, shell completion, PyInstaller for both entry points, then edit/delete/submit.

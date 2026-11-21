@@ -40,3 +40,27 @@ def parse_date(text: str, today: Optional[date] = None) -> date:
         return datetime.strptime(value, "%Y-%m-%d").date()
     except ValueError:
         raise ValueError(f"Invalid date '{text}'. Use {HELP}.") from None
+
+
+_TIME = re.compile(r"^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$")
+TIME_HELP = "HH:MM (24-hour), or like 9am, 2:30pm, now"
+
+
+def parse_time(text: str, now: Optional[datetime] = None) -> "time":
+    """Parse a clock time: 14:30, 9:05, 9am, 2:30pm, or 'now'."""
+    from datetime import time as _time
+
+    value = (text or "").strip().lower()
+    if value == "now":
+        return (now or datetime.now()).replace(second=0, microsecond=0).time()
+    match = _TIME.match(value)
+    if not match:
+        raise ValueError(f"Invalid time '{text}'. Use {TIME_HELP}.")
+    hour, minute, meridiem = int(match.group(1)), int(match.group(2) or 0), match.group(3)
+    if meridiem:
+        if not 1 <= hour <= 12:
+            raise ValueError(f"Invalid time '{text}'. Use {TIME_HELP}.")
+        hour = hour % 12 + (12 if meridiem == "pm" else 0)
+    if hour > 23 or minute > 59:
+        raise ValueError(f"Invalid time '{text}'. Use {TIME_HELP}.")
+    return _time(hour, minute)
