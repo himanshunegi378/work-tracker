@@ -11,7 +11,7 @@ app = typer.Typer(
     name="samta-tracker",
     help="Work Tracker from your terminal: the same app as the desktop GUI.",
     no_args_is_help=True,
-    add_completion=False,
+    add_completion=True,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
@@ -51,7 +51,7 @@ def _configure_cli_logging() -> None:
 
 
 def _register_commands() -> None:
-    from src.cli.commands import activities, auth, config, log, projects, timesheets, tracker
+    from src.cli.commands import activities, auth, completion, config, log, projects, timesheets, tracker
 
     app.command("login")(auth.login)
     app.command("logout")(auth.logout)
@@ -66,6 +66,7 @@ def _register_commands() -> None:
     app.command("status")(tracker.status)
     app.command("gui")(tracker.gui)
     app.command("remind")(tracker.remind)
+    app.command("completion")(completion.completion)
 
 
 _register_commands()

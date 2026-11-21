@@ -9,6 +9,17 @@ from src.cli.errors import USAGE, CliError, handle_errors
 from src.cli.output import GlobalOptions, emit_data, success
 from src.core import prefs
 
+def _complete_key(incomplete: str):
+    return [k for k in prefs.keys() if k.startswith(incomplete)]
+
+
+def _complete_value(ctx: typer.Context, incomplete: str):
+    key = ctx.params.get("key")
+    if key == "theme":
+        return [t for t in prefs.THEMES if t.startswith(incomplete)]
+    return []
+
+
 config_app = typer.Typer(help="Read and change settings shared with the desktop app.", no_args_is_help=True)
 
 _NOTES = {
@@ -22,7 +33,8 @@ _NOTES = {
 @handle_errors
 def get(
     ctx: typer.Context,
-    key: Optional[str] = typer.Argument(None, help=f"One of: {', '.join(prefs.keys())}. Omit to list all."),
+    key: Optional[str] = typer.Argument(None, help=f"One of: {', '.join(prefs.keys())}. Omit to list all.",
+                                        autocompletion=_complete_key),
 ) -> None:
     """Show one setting, or all of them."""
     opts: GlobalOptions = ctx.obj
@@ -44,8 +56,8 @@ def get(
 @handle_errors
 def set_(
     ctx: typer.Context,
-    key: str = typer.Argument(..., help=f"One of: {', '.join(prefs.keys())}"),
-    value: str = typer.Argument(..., help="New value."),
+    key: str = typer.Argument(..., help=f"One of: {', '.join(prefs.keys())}", autocompletion=_complete_key),
+    value: str = typer.Argument(..., help="New value.", autocompletion=_complete_value),
 ) -> None:
     """Change a setting."""
     opts: GlobalOptions = ctx.obj
