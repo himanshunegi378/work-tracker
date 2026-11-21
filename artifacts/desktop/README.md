@@ -3,7 +3,7 @@
 This folder contains the latest successful desktop build archives published from the `main` branch CI workflow onto the `artifacts` branch.
 
 ## Files
-- `worktracker-ubuntu.tar.gz`: Latest Ubuntu desktop bundle
+- `worktracker-ubuntu.deb`: Latest Debian/Ubuntu package (`sudo apt install ./worktracker-ubuntu.deb`)
 - `worktracker-windows.zip`: Latest Windows desktop bundle
 - `worktracker-macos.zip`: Latest macOS app bundle archive
 
