@@ -24,15 +24,24 @@ pip install -e .
 This installs two commands: `samta-tracker` (CLI) and `work-tracker-gui` (desktop app).
 Standalone bundles can be built with PyInstaller, see [docs/packaging.md](docs/packaging.md).
 
-### Using the downloaded app instead
+### Debian / Ubuntu
 
-The downloadable archives are not installers, so `samta-tracker` is not on your PATH at first.
+Download `worktracker-ubuntu.deb` (from the `artifacts` branch or a workflow run) and install it. This
+also puts `samta-tracker` on your PATH. Installing a newer `.deb` upgrades in place.
+
+```bash
+sudo apt install ./worktracker-ubuntu.deb
+```
+
+### Windows and macOS downloads
+
+The downloadable zips are not installers, so `samta-tracker` is not on your PATH at first.
 Either open the app and go to **Settings → Command line and AI agents → Install command-line
 tool**, or run once from the unpacked folder:
 
 ```bash
-./WorkTracker/samta-tracker setup          # Windows: .\WorkTracker\samta-tracker.exe setup
-                                           # macOS:   ./WorkTracker.app/Contents/MacOS/samta-tracker setup
+./WorkTracker.app/Contents/MacOS/samta-tracker setup   # macOS
+.\WorkTracker\samta-tracker.exe setup                   # Windows (PowerShell)
 ```
 
 Then open a new terminal. `samta-tracker setup --undo` reverses it.

@@ -26,7 +26,6 @@ jobs:
           - label: Ubuntu
             os: ubuntu-latest
             artifact_name: worktracker-ubuntu
-            archive_name: worktracker-ubuntu.tar.gz
 
           - label: Windows
             os: windows-latest
@@ -116,10 +115,12 @@ jobs:
         shell: bash
         run: bash scripts/build_macos.sh
 
-      - name: Archive Ubuntu bundle
+      - name: Build .deb package on Ubuntu
         if: ${{ runner.os == 'Linux' }}
         shell: bash
-        run: tar -czf worktracker-ubuntu.tar.gz -C dist WorkTracker
+        run: |
+          bash scripts/build_deb.sh .
+          mv work-tracker_*.deb worktracker-ubuntu.deb
 
       - name: Archive Windows bundle
         if: ${{ runner.os == 'Windows' }}
@@ -131,8 +132,17 @@ jobs:
         shell: bash
         run: ditto -c -k --sequesterRsrc --keepParent dist/WorkTracker.app worktracker-macos.zip
 
+      - name: Upload .deb package
+        if: ${{ success() && runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: worktracker-deb
+          path: worktracker-ubuntu.deb
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload build artifact
-        if: ${{ success() }}
+        if: ${{ success() && runner.os != 'Linux' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
@@ -165,11 +175,11 @@ jobs:
             git clean -fdx
           fi
 
-      - name: Download Ubuntu artifact
+      - name: Download .deb artifact
         uses: actions/download-artifact@v4
         with:
-          name: worktracker-ubuntu
-          path: tmp-artifacts/ubuntu
+          name: worktracker-deb
+          path: tmp-artifacts/deb
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
@@ -187,10 +197,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts/desktop
-          rm -f artifacts/desktop/worktracker-ubuntu.tar.gz
+          rm -f artifacts/desktop/worktracker-ubuntu.tar.gz  # no longer published; clears the old file
+          rm -f artifacts/desktop/worktracker-ubuntu.deb
           rm -f artifacts/desktop/worktracker-windows.zip
           rm -f artifacts/desktop/worktracker-macos.zip
-          cp tmp-artifacts/ubuntu/worktracker-ubuntu.tar.gz artifacts/desktop/worktracker-ubuntu.tar.gz
+          cp tmp-artifacts/deb/worktracker-ubuntu.deb artifacts/desktop/worktracker-ubuntu.deb
           cp tmp-artifacts/windows/worktracker-windows.zip artifacts/desktop/worktracker-windows.zip
           cp tmp-artifacts/macos/worktracker-macos.zip artifacts/desktop/worktracker-macos.zip
           cat <<'EOF' > artifacts/desktop/README.md
@@ -199,7 +210,7 @@ jobs:
           This folder contains the latest successful desktop build archives published from the `main` branch CI workflow onto the `artifacts` branch.
 
           ## Files
-          - `worktracker-ubuntu.tar.gz`: Latest Ubuntu desktop bundle
+          - `worktracker-ubuntu.deb`: Latest Debian/Ubuntu package (`sudo apt install ./worktracker-ubuntu.deb`)
           - `worktracker-windows.zip`: Latest Windows desktop bundle
           - `worktracker-macos.zip`: Latest macOS app bundle archive
 

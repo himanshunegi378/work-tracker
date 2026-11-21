@@ -72,7 +72,10 @@ def is_installed() -> bool:
     if sys.platform == "win32":
         return dir_on_path(exe.parent, _windows_user_path() or "") or dir_on_path(exe.parent)
     link = link_path()
-    return link.is_symlink() and link.resolve() == exe.resolve()
+    if link.is_symlink() and link.resolve() == exe.resolve():
+        return True
+    on_path = shutil.which(COMMAND)  # e.g. the .deb package links /usr/bin/samta-tracker
+    return bool(on_path) and Path(on_path).resolve() == exe.resolve()
 
 
 # ── the command on PATH ───────────────────────────────────────────────────────
