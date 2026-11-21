@@ -47,15 +47,33 @@ def login(
     username: Optional[str] = typer.Option(None, "-u", "--username", help="Username or email."),
     password_stdin: bool = typer.Option(False, "--password-stdin", help="Read the password from stdin."),
     url: Optional[str] = typer.Option(None, "--url", help="Server URL (saved for next time)."),
+    ui: bool = typer.Option(False, "--ui", help="Enter the credentials in a window instead of the terminal."),
 ) -> None:
     """Log in and remember the credentials (shared with the desktop app)."""
     opts: GlobalOptions = ctx.obj
+    if ui and password_stdin:
+        raise CliError("--ui and --password-stdin can't be used together.", USAGE)
     try:
         new_url = prefs.validate_url(url) if url else None
     except prefs.PrefError as exc:
         raise CliError(str(exc), USAGE)
 
     app = get_context(ctx, new_url)
+    server = _host(app.api_client.base_url)
+
+    if ui:
+        from src.cli.ui_login import prompt_login_ui
+
+        user = prompt_login_ui(app.auth.login, server=server, username=username or app.auth.get_saved_username() or "")
+        if not user:
+            raise CliError("Login cancelled.", ERROR)
+        if new_url:
+            prefs.set_value("url", new_url)
+        if opts.json_mode:
+            print(json.dumps({"logged_in": True, "user": user, "server": server}))
+        else:
+            success(f"Logged in to {server} as {user}", opts)
+        return
 
     if password_stdin and not username:
         raise CliError("--password-stdin needs --username (stdin carries only the password).", USAGE)
@@ -70,7 +88,6 @@ def login(
     if new_url:
         prefs.set_value("url", new_url)
 
-    server = _host(app.api_client.base_url)
     if opts.json_mode:
         print(json.dumps({"logged_in": True, "user": username, "server": server}))
     else:

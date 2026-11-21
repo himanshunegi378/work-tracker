@@ -176,3 +176,78 @@ def test_status_guest_with_saved_credentials_auto_logs_in(fake):
     result = runner.invoke(app, ["auth", "status"])
     assert result.exit_code == 0
     assert auth.login_calls == [("jane@samta.ai", "pw")]
+
+
+# ── login --ui ────────────────────────────────────────────────────────────
+def test_login_ui_success_prints_confirmation(fake, monkeypatch):
+    fake(FakeAuth(saved=("jane@samta.ai", "pw")))
+    seen = {}
+
+    def fake_prompt(verify, server="", username=""):
+        seen.update(server=server, username=username, verify=verify)
+        return "jane@samta.ai"
+
+    monkeypatch.setattr("src.cli.ui_login.prompt_login_ui", fake_prompt)
+    result = runner.invoke(app, ["login", "--ui"])
+    assert result.exit_code == 0 and "Logged in" in result.output
+    assert seen["server"] == "matrix.samta.ai" and seen["username"] == "jane@samta.ai"
+
+
+def test_login_ui_passes_the_auth_login_function_as_verifier(fake, monkeypatch):
+    auth = fake(FakeAuth())
+    monkeypatch.setattr("src.cli.ui_login.prompt_login_ui", lambda verify, **kw: verify("u", "p") and "u")
+    assert runner.invoke(app, ["login", "--ui"]).exit_code == 0
+    assert auth.login_calls == [("u", "p")]
+
+
+def test_login_ui_cancelled_exits_1(fake, monkeypatch):
+    fake(FakeAuth())
+    monkeypatch.setattr("src.cli.ui_login.prompt_login_ui", lambda *a, **k: None)
+    result = runner.invoke(app, ["login", "--ui"])
+    assert result.exit_code == 1 and "cancelled" in result.output
+
+
+def test_login_ui_with_json(fake, monkeypatch):
+    fake(FakeAuth())
+    monkeypatch.setattr("src.cli.ui_login.prompt_login_ui", lambda *a, **k: "jane@samta.ai")
+    out = json.loads(runner.invoke(app, ["--json", "login", "--ui"]).output)
+    assert out == {"logged_in": True, "user": "jane@samta.ai", "server": "matrix.samta.ai"}
+
+
+def test_login_ui_saves_url_only_when_logged_in(fake, monkeypatch):
+    fake(FakeAuth())
+    monkeypatch.setattr("src.cli.ui_login.prompt_login_ui", lambda *a, **k: None)
+    runner.invoke(app, ["login", "--ui", "--url", "https://other.example"])
+    assert prefs.get_url() == "https://matrix.samta.ai"
+    monkeypatch.setattr("src.cli.ui_login.prompt_login_ui", lambda *a, **k: "u")
+    runner.invoke(app, ["login", "--ui", "--url", "https://other.example/"])
+    assert prefs.get_url() == "https://other.example"
+
+
+def test_login_ui_conflicts_with_password_stdin(fake):
+    fake(FakeAuth())
+    result = runner.invoke(app, ["login", "--ui", "--password-stdin", "-u", "a"], input="x\n")
+    assert result.exit_code == 2 and "can't be used together" in result.output
+
+
+def test_login_ui_without_a_display_exits_4(monkeypatch):
+    from src.cli import ui_login
+
+    monkeypatch.setattr(ui_login, "display_available", lambda: False)
+    try:
+        ui_login.prompt_login_ui(lambda u, p: True)
+    except Exception as exc:
+        assert exc.exit_code == 4 and "password-stdin" in exc.hint
+    else:
+        raise AssertionError("expected CliError")
+
+
+def test_display_detection(monkeypatch):
+    from src.cli import ui_login
+
+    monkeypatch.setattr("sys.platform", "linux")
+    monkeypatch.delenv("DISPLAY", raising=False)
+    monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
+    assert ui_login.display_available() is False
+    monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-0")
+    assert ui_login.display_available() is True

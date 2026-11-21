@@ -25,7 +25,7 @@ Exit codes: `0` ok · `1` error · `2` bad usage · `3` not logged in · `4` GUI
 ### Auth
 | Command | Flags | Notes |
 |---|---|---|
-| `samta-tracker login` (alias `auth login`) | `-u/--username`, `--password-stdin`, `--url` | Prompts for missing username and hidden password. Saved to the keyring, so the GUI is logged in too. |
+| `samta-tracker login` (alias `auth login`) | `-u/--username`, `--password-stdin`, `--url`, `--ui` | Prompts for missing username and hidden password. `--ui` opens a small credentials window instead (wrong passwords show an error and allow a retry; exit 4 if there is no display). Saved to the keyring, so the GUI is logged in too. |
 | `samta-tracker logout` | | Removes the saved credentials, same as "Clear Credentials" in the GUI. |
 | `samta-tracker auth status` | | Server, user, session valid or expired. |
 
