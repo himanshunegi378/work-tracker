@@ -14,6 +14,8 @@ class SettingsView(QWidget):
     # Signals to communicate user actions to the Presenter
     save_credentials_requested = Signal(str, str) # username, password
     clear_credentials_requested = Signal()
+    install_cli_requested = Signal()
+    install_skill_requested = Signal()
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -47,6 +49,27 @@ class SettingsView(QWidget):
         manager.changed.connect(lambda _t_: self._sync_theme_buttons())
         self._sync_theme_buttons()
         
+        # Command line section
+        cli_card = Card()
+        cli_card.body.addWidget(label("Command line and AI agents", "heading"))
+        cli_card.body.addWidget(label(
+            "Use Work Tracker from any terminal as 'samta-tracker', and let AI agents such as "
+            "Claude Code control it.", "caption"))
+        self.cli_status_label = label("", "caption")
+        self.cli_status_label.setWordWrap(True)
+        cli_card.body.addWidget(self.cli_status_label)
+        cli_row = QHBoxLayout()
+        cli_row.setSpacing(SPACE["sm"])
+        self.install_cli_btn = button("Install command-line tool", "secondary")
+        self.install_skill_btn = button("Install agent skill", "secondary")
+        self.install_cli_btn.clicked.connect(lambda _=False: self.install_cli_requested.emit())
+        self.install_skill_btn.clicked.connect(lambda _=False: self.install_skill_requested.emit())
+        cli_row.addWidget(self.install_cli_btn)
+        cli_row.addWidget(self.install_skill_btn)
+        cli_row.addStretch()
+        cli_card.body.addLayout(cli_row)
+        self.layout.addWidget(cli_card)
+
         # Credentials Section Frame
         cred_frame = QFrame()
         cred_frame.setObjectName("cred_frame")
@@ -143,6 +166,17 @@ class SettingsView(QWidget):
         self.layout.addWidget(cred_frame)
         self.layout.addStretch()
         
+    def set_cli_state(self, status_text: str, can_install_cli: bool, cli_label: str, skill_label: str):
+        """Shows whether the command line and agent skill are set up, and what the buttons will do."""
+        self.cli_status_label.setText(status_text)
+        self.install_cli_btn.setEnabled(can_install_cli)
+        self.install_cli_btn.setText(cli_label)
+        self.install_skill_btn.setText(skill_label)
+
+    def show_info(self, message: str):
+        """Displays a neutral notification (used for setup results with extra instructions)."""
+        QMessageBox.information(self, "Command line", message)
+
     def _sync_theme_buttons(self):
         active = _t().name
         set_prop(self.light_btn, "variant", "primary" if active == "light" else "secondary")

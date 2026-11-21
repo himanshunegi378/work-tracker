@@ -136,3 +136,13 @@ They must stay side by side: `samta-tracker start` and `gui` launch the `WorkTra
 ## Agent skill
 
 `samta-tracker install-skill` copies `skills/samta-tracker/SKILL.md` (source; copied to `src/cli/skill/` by `scripts/sync_skill.py` and bundled with the app) to `~/.claude/skills/samta-tracker/`, so Claude Code and compatible agents can drive the CLI. Flags: `--project` (install into `./.claude/skills`), `--dir PATH` (another agent's skills folder), `--force` (overwrite a different copy; `-y` also works), `--print` (print instead of install). Re-running when identical is a no-op.
+
+## First-time setup after unpacking the app
+
+The downloaded archives are not installers, so `samta-tracker` is not on PATH at first. Run once, by full path:
+
+`samta-tracker setup` (Linux/macOS: `./WorkTracker/samta-tracker setup`, macOS: `./WorkTracker.app/Contents/MacOS/samta-tracker setup`, Windows: `.\WorkTracker\samta-tracker.exe setup`)
+
+- Linux/macOS: links `~/.local/bin/samta-tracker` to the program (prints the PATH line to add if that folder is not on PATH). Windows: adds the program's folder to the user PATH (no admin rights). A new terminal is needed afterwards.
+- Also installs the agent skill (`--no-skill` to skip). `--undo` removes the PATH entry/link. Safe to repeat.
+- The desktop app does the same from Settings → "Command line and AI agents" (buttons "Install command-line tool" and "Install agent skill"), using the same code (`src/core/cli_setup.py`).

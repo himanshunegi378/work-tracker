@@ -1,7 +1,6 @@
 """`samta-tracker install-skill`: teach an AI agent (Claude Code) to use this CLI."""
 
 import json
-from importlib import resources
 from pathlib import Path
 from typing import Optional
 
@@ -9,19 +8,13 @@ import typer
 
 from src.cli.errors import ERROR, CliError, handle_errors
 from src.cli.output import GlobalOptions, success
-
-SKILL_NAME = "samta-tracker"
-
-
-def skill_text() -> str:
-    return resources.files("src.cli.skill").joinpath("SKILL.md").read_text(encoding="utf-8")
+from src.core import cli_setup
 
 
-def target_dir(project: bool, directory: Optional[Path]) -> Path:
+def target_dir(project: bool, directory: Optional[Path]) -> Optional[Path]:
     if directory is not None:
-        return directory.expanduser() / SKILL_NAME
-    base = Path.cwd() / ".claude" / "skills" if project else Path.home() / ".claude" / "skills"
-    return base / SKILL_NAME
+        return directory
+    return Path.cwd() / ".claude" / "skills" if project else None
 
 
 @handle_errors
@@ -37,28 +30,14 @@ def install_skill(
     Default: ~/.claude/skills/samta-tracker/SKILL.md. Re-run after upgrading the app to refresh it.
     """
     opts: GlobalOptions = ctx.obj
-    text = skill_text()
     if print_only:
-        print(text)
+        print(cli_setup.skill_text())
         return
-
-    dest = target_dir(project, directory) / "SKILL.md"
-    status = "installed"
-    if dest.exists():
-        if dest.read_text(encoding="utf-8") == text:
-            status = "up-to-date"
-        elif not (force or opts.yes):
-            raise CliError(f"{dest} already exists and differs.", ERROR,
-                           hint="Overwrite it with: samta-tracker install-skill --force")
-        else:
-            status = "updated"
-    if status != "up-to-date":
-        try:
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_text(text, encoding="utf-8")
-        except OSError as exc:
-            raise CliError(f"Could not write {dest}: {exc}", ERROR)
-
+    try:
+        status, dest = cli_setup.install_skill(target_dir(project, directory), force=force or opts.yes)
+    except cli_setup.SetupError as exc:
+        hint = "Overwrite it with: samta-tracker install-skill --force" if "differs" in str(exc) else None
+        raise CliError(str(exc), ERROR, hint=hint)
     if opts.json_mode:
         print(json.dumps({"status": status, "path": str(dest)}))
     elif status == "up-to-date":

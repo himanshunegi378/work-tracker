@@ -37,6 +37,8 @@ OTHER_GUI_FEATURES = {
     "tray: open window": ["gui"],
     "tray: start/stop tracker": ["start", "stop"],
     "settings: theme": ["config set"],
+    "settings: install command-line tool": ["setup"],
+    "settings: install agent skill": ["install-skill"],
     # Timesheet Detail screen: row Edit/Delete buttons and Submit/Delete timesheet buttons
     "timesheet detail: edit entry": ["log edit"],
     "timesheet detail: delete entry": ["log rm"],
@@ -45,7 +47,7 @@ OTHER_GUI_FEATURES = {
 }
 
 # CLI commands with no GUI screen of their own (deliberate)
-CLI_ONLY = {"remind", "completion", "install-skill"}
+CLI_ONLY = {"remind", "completion"}
 
 
 def cli_commands():
@@ -106,6 +108,17 @@ def test_the_detail_screen_really_has_the_buttons_the_mapping_claims():
 
     view = TimesheetDetailView()
     for attribute in ("edit_btn", "delete_entry_btn", "submit_btn", "delete_timesheet_btn"):
+        assert hasattr(view, attribute), f"GUI action missing: {attribute}"
+
+
+def test_the_settings_screen_really_has_the_setup_buttons():
+    from PySide6.QtWidgets import QApplication
+
+    QApplication.instance() or QApplication([])
+    from src.ui.views.settings_view import SettingsView
+
+    view = SettingsView()
+    for attribute in ("install_cli_btn", "install_skill_btn"):
         assert hasattr(view, attribute), f"GUI action missing: {attribute}"
 
 
