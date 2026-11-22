@@ -12,6 +12,11 @@ OUT_DIR="${1:-$ROOT_DIR/dist}"
   echo "Missing $BUNDLE: run scripts/build_linux.sh first." >&2; exit 1; }
 
 VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' "$ROOT_DIR/src/cli/__init__.py")"
+# Every build gets a unique, increasing version (e.g. 0.1.0+20261122143005) so App Center / apt always
+# offer it as an upgrade over the installed one. A real bump (0.1.1) still sorts higher than any 0.1.0+...
+# Set BUILD_SUFFIX="" to build the plain __version__ (for a clean release).
+BUILD_SUFFIX="${BUILD_SUFFIX-+$(date -u +%Y%m%d%H%M%S)}"
+VERSION="${VERSION}${BUILD_SUFFIX}"
 ARCH="$(dpkg --print-architecture)"
 PKG="work-tracker_${VERSION}_${ARCH}"
 STAGE="$(mktemp -d)"
