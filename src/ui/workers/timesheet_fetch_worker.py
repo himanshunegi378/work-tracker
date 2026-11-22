@@ -31,12 +31,14 @@ class TimesheetFetchWorker(QRunnable):
         page_length: int = 20,
         employee: Optional[str] = None,
         csrf_token: Optional[str] = None,
+        all_employees: bool = False,
     ):
         super().__init__()
         self.service = service
         self.start = start
         self.page_length = page_length
         self.employee = employee
+        self.all_employees = all_employees
         self.csrf_token = csrf_token
         self.signals = _TimesheetFetchSignals()
 
@@ -54,6 +56,7 @@ class TimesheetFetchWorker(QRunnable):
                 page_length=self.page_length,
                 employee=self.employee,
                 csrf_token=self.csrf_token,
+                all_employees=self.all_employees,
             )
             self.signals.result_ready.emit(timesheets)
         except TimesheetServiceError as exc:

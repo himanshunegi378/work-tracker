@@ -85,9 +85,24 @@ class TimesheetDetailPresenter(QObject):
 
     @Slot(dict)
     def _on_result_ready(self, detail: dict) -> None:
-        self.view.display_timesheet_detail(detail)
+        note = self._read_only_note(detail)
+        if note:
+            self.view.display_timesheet_detail(detail, read_only_note=note)
+        else:
+            self.view.display_timesheet_detail(detail)
         self.view.set_loading(False)
         logger.debug("TimesheetDetailPresenter: displayed detail for %s", self._current_name)
+
+    def _read_only_note(self, detail: dict) -> str:
+        """A note locking the screen when the timesheet belongs to someone else, else ""."""
+        owner = detail.get("employee")
+        try:
+            me = self.service.auth_service.getSession()
+        except Exception:  # noqa: BLE001 - never block the screen over this check
+            return ""
+        if not owner or not isinstance(me, str) or owner == me:
+            return ""
+        return f"Viewing {detail.get('employee_name') or owner}'s timesheet: read only."
 
     @Slot(str)
     def _on_error_occurred(self, message: str) -> None:

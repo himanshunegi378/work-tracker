@@ -39,7 +39,8 @@ def list_(
     leave_type: Optional[str] = typer.Option(None, "--type", help="Exact leave type, e.g. 'Sick Leave'."),
     from_: Optional[str] = typer.Option(None, "--from", help=f"Ending on or after this date ({dates.HELP})."),
     to: Optional[str] = typer.Option(None, "--to", help=f"Starting on or before this date ({dates.HELP})."),
-    employee: Optional[str] = typer.Option(None, "--employee", help="Employee id (default: you)."),
+    employee: Optional[str] = typer.Option(None, "--employee", help="Employee id (default: you). See `samta-tracker employees`."),
+    all_employees: bool = typer.Option(False, "--all-employees", help="Everyone's leaves that you have permission to see."),
     limit: Optional[int] = LIMIT_OPTION,
     page: int = PAGE_OPTION,
     all_pages: bool = ALL_OPTION,
@@ -48,13 +49,15 @@ def list_(
     from_date, to_date = _parse(from_, "--from"), _parse(to, "--to")
     if from_date and to_date and from_date > to_date:
         raise CliError("--from is after --to.", USAGE)
+    if all_employees and employee:
+        raise CliError("--all-employees cannot be combined with --employee.", USAGE)
     service = get_context(ctx).leave
 
     def fetch(start: int, count: int):
         return service.get_leave_applications(
             start=start, page_length=count, employee=employee,
             status=status.value.capitalize() if status else None, leave_type=leave_type,
-            from_date=from_date, to_date=to_date,
+            from_date=from_date, to_date=to_date, all_employees=all_employees,
         )
 
     run_list(
@@ -81,3 +84,4 @@ def balance(
          ("leaves_pending_approval", "PENDING"), ("remaining_leaves", "REMAINING")],
         ctx.obj, quiet_key="leave_type",
     )
+

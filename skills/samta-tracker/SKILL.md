@@ -130,9 +130,10 @@ Global flags (before the command): `--json`, `--no-color`, `-q/--quiet` (ids onl
 | `projects list [-s TEXT] [--status open\|completed\|cancelled] [--priority high\|medium\|low] [--active\|--inactive] [-n N] [--page P] [--all]` | find the project id/name for logging |
 | `projects view ID` | one project |
 | `activities list [-s TEXT] [-n N] [--all]` | valid activity types |
-| `leave list [--status open\|approved\|rejected\|cancelled] [--type NAME] [--from DATE] [--to DATE] [-n N] [--all]` | your leave applications, newest first. `--type` is the exact leave type name (e.g. `"Sick Leave"`, `"Privilege Leave"`; types are set per company). `--from`/`--to` match any leave overlapping the range. Read-only: applying for leave is not supported. |
-| `leave balance [--date DATE]` | leaves allocated / taken / pending / remaining per leave type (only types with an allocation; Leave Without Pay has none) |
-| `timesheets list [--status draft\|submitted\|...] [--workflow-state STATE] [--from DATE] [--to DATE] [-n N] [--all]` | newest first |
+| `leave list [--status open\|approved\|rejected\|cancelled] [--type NAME] [--from DATE] [--to DATE] [--employee ID \| --all-employees] [-n N] [--all]` | your leave applications (or another person's / everyone's that the user has permission to see), newest first. `--type` is the exact leave type name (e.g. `"Sick Leave"`, `"Privilege Leave"`; types are set per company). `--from`/`--to` match any leave overlapping the range. Read-only: applying for leave is not supported. |
+| `employees` | IDs and names of the people whose leave and timesheets the user may see; find an ID here before using `--employee` (IDs are not always emails, e.g. `IN00133`) |
+| `leave balance [--date DATE] [--employee ID]` | leaves allocated / taken / pending / remaining per leave type (only types with an allocation; Leave Without Pay has none) |
+| `timesheets list [--status draft\|submitted\|...] [--workflow-state STATE] [--from DATE] [--to DATE] [--employee ID \| --all-employees] [-n N] [--all]` | newest first. Your own by default; `--employee`/`--all-employees` show other people's that the user has permission to see (adds an EMPLOYEE column). Other people's timesheets are read-only: never submit, edit or delete them. |
 | `timesheets view NAME` / `timesheets today` | a timesheet with its entries |
 | `log list [--date DATE] [--timesheet NAME]` | entries with a `#` column used by edit/rm |
 
@@ -178,6 +179,10 @@ Needs a graphical session (exit 4 otherwise). `start` pops the Smart Log prompt 
 **"What did I do today?"** → `--json log list` and summarise (hours per project).
 
 **"Fix my last entry"** → `--json log list`, `log edit last -d "..." --dry-run`, show diff, apply.
+
+**"Is Ankush on leave this week?" / "Who is off tomorrow?"** → `--json employees` to find the ID, then `--json leave list --employee ID --from today --to +7d`, or `--json leave list --all-employees --from tomorrow --to tomorrow --status approved` for the whole team. The server only returns what the user is permitted to see; an empty list can mean "no access", not "no leave".
+
+**"What did Ankush log this week?" / "Whose timesheets are still Pending?"** → `--json employees` for the ID, then `--json timesheets list --employee ID --from -7d` (or `--all-employees --workflow-state Pending`), and `timesheets view NAME` for the entries. Results are limited to what the user may see.
 
 **"How many leaves do I have left?"** → `--json leave balance` and report `remaining_leaves` per type (mention any `leaves_pending_approval`).
 

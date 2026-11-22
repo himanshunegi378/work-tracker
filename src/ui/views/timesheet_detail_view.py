@@ -83,6 +83,7 @@ class TimesheetDetailView(QWidget):
         self._summary_labels: Dict[str, QLabel] = {}
         self._entries: Dict[str, dict] = {}
         self._editable = False
+        self._read_only_note = ""
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -220,7 +221,10 @@ class TimesheetDetailView(QWidget):
         self.delete_entry_btn.setEnabled(self._editable and has_selection)
         self.submit_btn.setEnabled(self._editable and bool(self._entries))
         self.delete_timesheet_btn.setEnabled(self._editable)
-        self.actions_note.setText("" if self._editable else "Only Pending timesheets can be changed.")
+        if self._read_only_note:
+            self.actions_note.setText(self._read_only_note)
+        else:
+            self.actions_note.setText("" if self._editable else "Only Pending timesheets can be changed.")
 
     def confirm(self, title: str, text: str) -> bool:
         """Ask a yes/no question (overridable in tests)."""
@@ -232,9 +236,13 @@ class TimesheetDetailView(QWidget):
         QMessageBox.information(self, title, message)
 
     @Slot(dict)
-    def display_timesheet_detail(self, detail: dict) -> None:
-        """Render one normalized timesheet detail payload."""
-        self._editable = detail.get("workflow_state") in ("Pending", "", None)
+    def display_timesheet_detail(self, detail: dict, read_only_note: str = "") -> None:
+        """Render one normalized timesheet detail payload.
+
+        `read_only_note` (e.g. "Viewing Ankush's timesheet: read only.") locks every action.
+        """
+        self._read_only_note = read_only_note
+        self._editable = not read_only_note and detail.get("workflow_state") in ("Pending", "", None)
         self._entries = {str(log.get("name")): log for log in detail.get("time_logs") or [] if log.get("name")}
         self.title_lbl.setText(f"Timesheet Detail • {detail.get('name') or '—'}")
         for key, label in self._summary_labels.items():

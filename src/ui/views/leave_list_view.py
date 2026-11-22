@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 
 from src.ui.design import bind_style, label
 from src.ui.theme import COLORS, card_style
+from src.ui.views.employee_filter import EmployeeFilter
 from src.ui.views.activity_list_view import _BTN_STYLE, _NAV_BTN_STYLE, _TABLE_STYLE
 
 ALL_TYPES = "All types"
@@ -28,7 +29,7 @@ def _days_text(value: Any) -> str:
 class LeaveListView(QWidget):
     """Pure view. Emits `fetch_requested(status, page)`; the presenter feeds it rows."""
 
-    fetch_requested = Signal(str, str, int)  # (status, leave type, 0-based page); "" means all
+    fetch_requested = Signal(str, str, str, int)  # (status, type, employee, page); "" = all / me, "*" = everyone
 
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
@@ -44,6 +45,9 @@ class LeaveListView(QWidget):
         header = QHBoxLayout()
         header.addWidget(label("Leave", "title"))
         header.addStretch()
+        self.employee_combo = EmployeeFilter()
+        self.employee_combo.currentIndexChanged.connect(self._on_filter_changed)
+        header.addWidget(self.employee_combo)
         self.type_combo = QComboBox()
         self.type_combo.addItem(ALL_TYPES)
         self.type_combo.setMinimumWidth(150)
@@ -146,6 +150,12 @@ class LeaveListView(QWidget):
         text = self.type_combo.currentText()
         return "" if text == ALL_TYPES else text
 
+    def selected_employee(self) -> str:
+        return self.employee_combo.selected_employee()
+
+    def set_employees(self, people: List[Dict[str, str]]) -> None:
+        self.employee_combo.set_people(people)
+
     def set_leave_types(self, types: List[str]) -> None:
         """Fill the type dropdown, keeping the current choice if it still exists."""
         current = self.selected_type()
@@ -158,7 +168,9 @@ class LeaveListView(QWidget):
         self.type_combo.blockSignals(False)
 
     def _emit(self) -> None:
-        self.fetch_requested.emit(self.selected_status(), self.selected_type(), self._page)
+        self.fetch_requested.emit(
+            self.selected_status(), self.selected_type(), self.selected_employee(), self._page
+        )
 
     def _on_filter_changed(self, _index: int) -> None:
         self._page = 0
@@ -200,6 +212,7 @@ class LeaveListView(QWidget):
     def set_loading(self, is_loading: bool) -> None:
         self.status_combo.setEnabled(not is_loading)
         self.type_combo.setEnabled(not is_loading)
+        self.employee_combo.setEnabled(not is_loading)
         self.refresh_btn.setEnabled(not is_loading)
         if is_loading:
             self.table.hide()

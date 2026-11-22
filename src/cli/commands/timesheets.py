@@ -91,12 +91,15 @@ def list_(
     workflow_state: Optional[str] = typer.Option(None, "--workflow-state", help="Exact workflow state, e.g. Approved."),
     from_: Optional[str] = typer.Option(None, "--from", help=f"Starting on or after this date ({_DATE_HELP})."),
     to: Optional[str] = typer.Option(None, "--to", help=f"Ending on or before this date ({_DATE_HELP})."),
-    employee: Optional[str] = typer.Option(None, "--employee", help="Employee id (default: you)."),
+    employee: Optional[str] = typer.Option(None, "--employee", help="Employee id (default: you). See `samta-tracker employees`."),
+    all_employees: bool = typer.Option(False, "--all-employees", help="Everyone's timesheets that you have permission to see."),
     limit: Optional[int] = LIMIT_OPTION,
     page: int = PAGE_OPTION,
     all_pages: bool = ALL_OPTION,
 ) -> None:
-    """List your timesheets, newest first."""
+    """List your timesheets (or other people's you may see), newest first."""
+    if all_employees and employee:
+        raise CliError("--all-employees cannot be combined with --employee.", USAGE)
     from_date = _parse_date_option(from_, "--from")
     to_date = _parse_date_option(to, "--to")
     if from_date and to_date and from_date > to_date:
@@ -108,12 +111,15 @@ def list_(
             start=start, page_length=count, employee=employee,
             status=status.value.capitalize() if status else None,
             workflow_state=workflow_state, from_date=from_date, to_date=to_date,
+            all_employees=all_employees,
         )
 
+    columns = [("name", "NAME"), ("status", "STATUS"), ("workflow_state", "WORKFLOW"), ("start_date", "START"),
+               ("end_date", "END"), ("total_hours", "HOURS")]
+    if all_employees or employee:  # whose timesheet it is only matters when it may not be yours
+        columns.insert(1, ("employee_name", "EMPLOYEE"))
     run_list(
-        ctx, fetch,
-        [("name", "NAME"), ("status", "STATUS"), ("workflow_state", "WORKFLOW"), ("start_date", "START"),
-         ("end_date", "END"), ("total_hours", "HOURS")],
+        ctx, fetch, columns,
         noun="timesheets", quiet_key="name", limit=limit, page=page, all_pages=all_pages,
     )
 

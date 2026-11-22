@@ -155,3 +155,81 @@ def test_cli_leave_balance_table_and_date(leave):
 def test_cli_leave_balance_json_and_quiet(leave):
     assert json.loads(run("--json", "leave", "balance").output)[0]["remaining_leaves"] == 1.0
     assert run("-q", "leave", "balance").output.strip() == "Sick Leave"
+
+
+def test_service_all_employees_drops_the_employee_filter():
+    service, api = make_service()
+    service.get_leave_applications(all_employees=True, status="Open")
+    filters = json.loads(parse_qs(api.post.call_args.kwargs["data"])["filters"][0])
+    assert filters == [["Leave Application", "status", "=", "Open"]]
+    service.get_leave_applications(all_employees=True, employee="a@x.ai")  # explicit person wins
+    filters = json.loads(parse_qs(api.post.call_args.kwargs["data"])["filters"][0])
+    assert filters == [["Leave Application", "employee", "=", "a@x.ai"]]
+
+
+def test_service_all_employees_needs_no_login():
+    service, _ = make_service(session=None)
+    service.get_leave_applications(all_employees=True)  # must not raise
+
+
+def test_cli_all_employees_flag_and_conflict(leave):
+    assert run("leave", "list", "--all-employees").exit_code == 0
+    assert leave.calls[0]["all_employees"] is True
+    clash = run("leave", "list", "--all-employees", "--employee", "a@x.ai")
+    assert clash.exit_code != 0 and len(leave.calls) == 1
+
+
+# ── GUI presenter: employee dropdown drives the list and the balance cards ──
+@pytest.fixture
+def leave_page(monkeypatch):
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication
+    from src.ui import leave_list_presenter as mod
+    from src.ui.views.leave_list_view import LeaveListView
+
+    app = QApplication.instance() or QApplication([])
+
+    class Inline:  # run workers immediately instead of on the thread pool
+        @staticmethod
+        def globalInstance():
+            return SimpleNamespace(start=lambda worker: worker.run())
+
+    monkeypatch.setattr(mod, "QThreadPool", Inline)
+    service = MagicMock()
+    service.get_leave_applications.return_value = []
+    service.get_leave_balance.return_value = [{"leave_type": "Sick Leave", "total_leaves": 6.0,
+                                               "leaves_taken": 5.0, "remaining_leaves": 1.0}]
+    employees = MagicMock()
+    employees.get_employees.return_value = [{"employee": "a@x.ai", "employee_name": "Ankush"}]
+    service.get_leave_types.return_value = ["Sick Leave"]
+    view = LeaveListView()
+    presenter = mod.LeaveListPresenter(view, service, employee_service=employees)
+    presenter.refresh()
+    view._presenter = presenter  # keep alive: Qt drops connections to a collected QObject
+    view._employees = employees
+    return view, service
+
+
+def test_employee_dropdown_lists_me_everyone_then_people(leave_page):
+    view, service = leave_page
+    items = [view.employee_combo.itemText(i) for i in range(view.employee_combo.count())]
+    assert items == ["Me", "Everyone", "Ankush"]
+    view._employees.get_employees.assert_called_once_with(include_self=False)
+    assert view.balance_row.count() > 1  # my balance cards are shown
+
+
+def test_choosing_everyone_lists_all_and_clears_balances(leave_page):
+    view, service = leave_page
+    view.employee_combo.setCurrentIndex(1)
+    kwargs = service.get_leave_applications.call_args.kwargs
+    assert kwargs["all_employees"] is True and kwargs["employee"] is None
+    assert view.balance_row.count() == 1  # only the trailing stretch
+
+
+def test_choosing_a_person_filters_list_and_loads_their_balance(leave_page):
+    view, service = leave_page
+    view.employee_combo.setCurrentIndex(2)
+    kwargs = service.get_leave_applications.call_args.kwargs
+    assert kwargs["employee"] == "a@x.ai" and kwargs["all_employees"] is False
+    assert service.get_leave_balance.call_args.kwargs == {"employee": "a@x.ai"}

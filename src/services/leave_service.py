@@ -55,17 +55,22 @@ class LeaveService:
         from_date: Optional[Any] = None,
         to_date: Optional[Any] = None,
         csrf_token: Optional[str] = None,
+        all_employees: bool = False,
     ) -> List[Dict[str, Any]]:
-        """Return leave applications for one employee, newest first.
+        """Return leave applications for one employee (default: you), newest first.
+
+        With `all_employees=True` and no `employee`, return everyone's leaves that the
+        server lets this account see (the server enforces permissions).
 
         `from_date` keeps leaves ending on or after it; `to_date` keeps leaves
         starting on or before it (so a leave overlapping the range is included).
         """
-        employee_filter = employee or self.auth_service.getSession()
-        if not employee_filter:
-            raise LeaveAuthError("No authenticated user is available for the leave employee filter.")
-
-        filters: List[List[Any]] = [[DOCTYPE, "employee", "=", employee_filter]]
+        filters: List[List[Any]] = []
+        if employee or not all_employees:
+            employee_filter = employee or self.auth_service.getSession()
+            if not employee_filter:
+                raise LeaveAuthError("No authenticated user is available for the leave employee filter.")
+            filters.append([DOCTYPE, "employee", "=", employee_filter])
         if status:
             filters.append([DOCTYPE, "status", "=", status])
         if leave_type:
@@ -176,4 +181,8 @@ class LeaveService:
         if not isinstance(message, dict):
             return []
         keys = message.get("keys") or []
-        return [dict(zip(keys, values)) for values in message.get("values") or []]
+        rows = [dict(zip(keys, values)) for values in message.get("values") or []]
+        for row in rows:  # the server pads some names with double spaces
+            if isinstance(row.get("employee_name"), str):
+                row["employee_name"] = " ".join(row["employee_name"].split())
+        return rows

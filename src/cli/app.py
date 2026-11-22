@@ -51,7 +51,7 @@ def _configure_cli_logging() -> None:
 
 
 def _register_commands() -> None:
-    from src.cli.commands import activities, auth, completion, config, leave, log, projects, setup, skill, timesheets, tracker
+    from src.cli.commands import activities, auth, completion, config, employees, leave, log, projects, setup, skill, timesheets, tracker
 
     app.command("login")(auth.login)
     app.command("logout")(auth.logout)
@@ -60,6 +60,7 @@ def _register_commands() -> None:
     app.add_typer(projects.projects_app, name="projects")
     app.add_typer(activities.activities_app, name="activities")
     app.add_typer(timesheets.timesheets_app, name="timesheets")
+    app.command("employees")(employees.employees)
     app.add_typer(leave.leave_app, name="leave")
     app.add_typer(log.log_app, name="log")
     app.command("start")(tracker.start)

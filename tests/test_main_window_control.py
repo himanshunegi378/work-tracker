@@ -29,7 +29,7 @@ def window(qapp, tmp_path, monkeypatch):
     projects.get_projects.return_value = []
     timesheets = MagicMock()
     timesheets.get_timesheets.return_value = []
-    win = gui_main.MainWindow(auth, projects, MagicMock(), timesheets, MagicMock())
+    win = gui_main.MainWindow(auth, projects, MagicMock(), timesheets, MagicMock(), MagicMock())
     yield win
     win.tracker.stop()
     win.close()

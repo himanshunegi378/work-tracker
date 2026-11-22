@@ -38,6 +38,7 @@ OTHER_GUI_FEATURES = {
     "smart log dialog (tracker prompt)": ["log add", "log list"],
     "tray: open window": ["gui"],
     "tray: start/stop tracker": ["start", "stop"],
+    "employee dropdown (leave and timesheet lists)": ["employees"],
     "settings: theme": ["config set"],
     "settings: install command-line tool": ["setup"],
     # Timesheet Detail screen: row Edit/Delete buttons and Submit/Delete timesheet buttons

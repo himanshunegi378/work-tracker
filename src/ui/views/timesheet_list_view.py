@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 
 from src.ui.theme import COLORS, card_style
 from src.ui.design import bind_style, current as _t, label
+from src.ui.views.employee_filter import EmployeeFilter
 logger = logging.getLogger(__name__)
 
 _COLORS = COLORS
@@ -116,7 +117,7 @@ def _NAV_BTN_STYLE() -> str:
 class TimesheetListView(QWidget):
     """UI component for browsing Timesheets fetched from the backend."""
 
-    fetch_requested = Signal(int)
+    fetch_requested = Signal(str, int)  # (employee: "" me / "*" everyone / id, 0-based page)
     timesheet_selected = Signal(str)
 
     def __init__(self, parent: QWidget = None):
@@ -138,6 +139,10 @@ class TimesheetListView(QWidget):
         header_lbl = label("Timesheets", "title")
         header_row.addWidget(header_lbl)
         header_row.addStretch()
+
+        self.employee_combo = EmployeeFilter()
+        self.employee_combo.currentIndexChanged.connect(self._on_employee_changed)
+        header_row.addWidget(self.employee_combo)
 
         self.refresh_btn = QPushButton("↻  Refresh")
         bind_style(self.refresh_btn, _BTN_STYLE)
@@ -177,9 +182,9 @@ class TimesheetListView(QWidget):
         card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(0)
 
-        self.table = QTableWidget(0, 6)
+        self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels(
-            ["Name", "Workflow State", "Status", "Start Date", "End Date", "Total Hours"]
+            ["Name", "Employee", "Workflow State", "Status", "Start Date", "End Date", "Total Hours"]
         )
         bind_style(self.table, _TABLE_STYLE)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -188,7 +193,7 @@ class TimesheetListView(QWidget):
         self.table.setShowGrid(True)
         self.table.itemClicked.connect(self._on_item_clicked)
         self.table.verticalHeader().setVisible(False)
-        for column in range(6):
+        for column in range(7):
             mode = QHeaderView.Stretch if column == 0 else QHeaderView.ResizeToContents
             self.table.horizontalHeader().setSectionResizeMode(column, mode)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -238,18 +243,31 @@ class TimesheetListView(QWidget):
 
         main_layout.addLayout(pagination_row)
 
+    def selected_employee(self) -> str:
+        return self.employee_combo.selected_employee()
+
+    def set_employees(self, people: List[Dict[str, str]]) -> None:
+        self.employee_combo.set_people(people)
+
+    def _emit(self) -> None:
+        self.fetch_requested.emit(self.selected_employee(), self._current_page)
+
+    def _on_employee_changed(self, _index: int) -> None:
+        self._current_page = 0
+        self._emit()
+
     def _on_refresh_clicked(self) -> None:
         self._current_page = 0
-        self.fetch_requested.emit(self._current_page)
+        self._emit()
 
     def _on_prev_clicked(self) -> None:
         if self._current_page > 0:
             self._current_page -= 1
-            self.fetch_requested.emit(self._current_page)
+            self._emit()
 
     def _on_next_clicked(self) -> None:
         self._current_page += 1
-        self.fetch_requested.emit(self._current_page)
+        self._emit()
 
     def _on_item_clicked(self, item: QTableWidgetItem) -> None:
         row = item.row()
@@ -305,6 +323,7 @@ class TimesheetListView(QWidget):
             str(timesheet.get(key, ""))
             for key in (
                 "name",
+                "employee_name",
                 "workflow_state",
                 "status",
                 "start_date",
@@ -335,6 +354,7 @@ class TimesheetListView(QWidget):
             self._row_timesheet_names.append(str(timesheet.get("name", "")))
             values = [
                 str(timesheet.get("name", "—")),
+                str(timesheet.get("employee_name") or "—"),
                 str(timesheet.get("workflow_state", "—")),
                 str(timesheet.get("status", "—")),
                 str(timesheet.get("start_date", "—")),
@@ -343,7 +363,7 @@ class TimesheetListView(QWidget):
             ]
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                if column == 5:
+                if column == 6:
                     item.setTextAlignment(Qt.AlignCenter)
                 self.table.setItem(row, column, item)
 
@@ -376,6 +396,7 @@ class TimesheetListView(QWidget):
         self.next_btn.setEnabled(not is_loading)
         self.table.setEnabled(not is_loading)
         self.search_input.setEnabled(not is_loading)
+        self.employee_combo.setEnabled(not is_loading)
         self.status_filter.setEnabled(not is_loading)
 
         if is_loading:

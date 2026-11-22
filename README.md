@@ -64,7 +64,7 @@ app, so logging in once covers both. Passwords are never written to disk by this
 | Area | Commands |
 |---|---|
 | Account | `login`, `logout`, `auth status` |
-| Read | `projects list\|view`, `activities list`, `leave list|balance`, `timesheets list\|view\|today`, `log list` |
+| Read | `projects list\|view`, `activities list`, `leave list|balance`, `employees`, `timesheets list\|view\|today`, `log list` |
 | Record and change time | `log add`, `log edit`, `log rm` |
 | Timesheets | `timesheets submit`, `timesheets rm` |
 | Desktop app | `start`, `stop`, `status`, `gui`, `remind` |

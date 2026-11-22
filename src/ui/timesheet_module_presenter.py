@@ -23,11 +23,14 @@ class TimesheetModulePresenter(QObject):
         page_size: int = 20,
         project_service=None,
         activity_service=None,
+        employee_service=None,
     ):
         super().__init__()
         self.view = view
         self.service = service
-        self.list_presenter = TimesheetListPresenter(view.list_view, service, page_size=page_size)
+        self.list_presenter = TimesheetListPresenter(
+            view.list_view, service, page_size=page_size, employee_service=employee_service
+        )
         self.detail_presenter = TimesheetDetailPresenter(
             view.detail_view, service, project_service=project_service, activity_service=activity_service
         )

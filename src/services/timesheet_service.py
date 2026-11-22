@@ -57,6 +57,8 @@ class TimesheetService:
         "`tabTimesheet`.`total_hours`",
         "`tabTimesheet`.`end_date`",
         "`tabTimesheet`.`currency`",
+        "`tabTimesheet`.`employee`",
+        "`tabTimesheet`.`employee_name`",
     ]
 
     def __init__(self, api_client: ApiClient, auth_service: AuthService):
@@ -81,25 +83,32 @@ class TimesheetService:
         from_date: Optional[Any] = None,
         to_date: Optional[Any] = None,
         covering_date: Optional[Any] = None,
+        all_employees: bool = False,
     ) -> List[Dict[str, Any]]:
-        """Return normalized timesheet list records for one employee.
+        """Return normalized timesheet list records for one employee (default: you).
+
+        With `all_employees=True` and no `employee`, return everyone's timesheets the
+        server lets this account see (the server enforces permissions).
 
         Optional filters: exact `status` / `workflow_state`; `from_date` keeps
         timesheets starting on or after it; `to_date` keeps those ending on or
         before it; `covering_date` keeps the timesheet whose range contains it.
         """
-        employee_filter = employee or self.auth_service.getSession()
-        if not employee_filter:
-            raise TimesheetAuthError(
-                "No authenticated user is available for the timesheet employee filter."
-            )
+        employee_filters: List[List[Any]] = []
+        if employee or not all_employees:
+            employee_filter = employee or self.auth_service.getSession()
+            if not employee_filter:
+                raise TimesheetAuthError(
+                    "No authenticated user is available for the timesheet employee filter."
+                )
+            employee_filters.append(["Timesheet", "employee", "=", employee_filter])
 
         try:
             response = self.api_client.post(
                 self.reportview_endpoint,
                 data=urllib.parse.urlencode(
                     self._build_reportview_payload(
-                        filters=[["Timesheet", "employee", "=", employee_filter]]
+                        filters=employee_filters
                         + self._build_optional_filters(
                             status, workflow_state, from_date, to_date, covering_date
                         ),
@@ -113,10 +122,14 @@ class TimesheetService:
                     include_form_content_type=True,
                 ),
             )
-            return self._normalize_reportview_response(
+            rows = self._normalize_reportview_response(
                 response.json(),
                 source="get_timesheets",
             )
+            for row in rows:  # the server pads some names with double spaces
+                if isinstance(row.get("employee_name"), str):
+                    row["employee_name"] = " ".join(row["employee_name"].split())
+            return rows
         except ApiClientError as exc:
             logger.error("Failed to fetch timesheets: %s", exc)
             raise TimesheetServiceError(f"Failed to fetch timesheets: {exc}") from exc

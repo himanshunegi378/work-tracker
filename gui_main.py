@@ -12,6 +12,7 @@ from src.core.app import build_app
 from src.core.logging_setup import configure_logging
 from src.runtime_paths import ensure_runtime_dirs, user_data_dir
 from src.services.activity_service import ActivityService
+from src.services.employee_service import EmployeeService
 from src.services.leave_service import LeaveService
 from src.services.auth_service import AuthService
 from src.services.project_service import ProjectService
@@ -43,6 +44,7 @@ class MainWindow(QMainWindow):
         activity_service: ActivityService,
         timesheet_service: TimesheetService,
         leave_service: LeaveService,
+        employee_service: EmployeeService,
     ):
         super().__init__()
         self.setWindowTitle("Senior Architect Work Tracker")
@@ -73,12 +75,15 @@ class MainWindow(QMainWindow):
         self.home_presenter     = HomePresenter(self.container.home_view, project_service)
         self.settings_presenter = SettingsPresenter(self.container.settings_view, self.auth)
         self.activity_presenter = ActivityListPresenter(self.container.activity_view, activity_service)
-        self.leave_presenter = LeaveListPresenter(self.container.leave_view, leave_service)
+        self.leave_presenter = LeaveListPresenter(
+            self.container.leave_view, leave_service, employee_service=employee_service
+        )
         self.timesheet_presenter = TimesheetModulePresenter(
             self.container.timesheet_view,
             timesheet_service,
             project_service=project_service,
             activity_service=activity_service,
+            employee_service=employee_service,
         )
         self.timesheet_presenter.data_changed.connect(self._refresh_dashboard)
         self.container.sidebar.nav_requested.connect(self._handle_navigation)
@@ -346,6 +351,7 @@ def main(argv=None):
         ctx.activities,
         ctx.timesheets,
         ctx.leave,
+        ctx.employees,
     )
     window.started_hidden = args.hidden
     has_tray = window.setup_tray()

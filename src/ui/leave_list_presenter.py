@@ -13,14 +13,18 @@ logger = logging.getLogger(__name__)
 
 
 class LeaveListPresenter(QObject):
-    def __init__(self, view: LeaveListView, service: LeaveService, page_size: int = 20):
+    def __init__(self, view: LeaveListView, service: LeaveService, employee_service=None, page_size: int = 20):
         super().__init__()
         self.view = view
         self.service = service
+        self.employee_service = employee_service
         self.page_size = page_size
         self._status = ""
         self._leave_type = ""
         self._types_loaded = False
+        self._employees_loaded = False
+        self._employee = ""
+        self._balance_employee: Optional[str] = None
         self._page = 0
         self._request_id = 0  # drop results of superseded requests
         self.view.fetch_requested.connect(self._on_fetch_requested)
@@ -29,8 +33,12 @@ class LeaveListPresenter(QObject):
         """Reload the first page; called whenever the user opens the Leave screen."""
         if not self._types_loaded:
             self._load_types()
-        self._load_balances()
-        self._fetch(self.view.selected_status(), self.view.selected_type(), 0)
+        if not self._employees_loaded:
+            self._load_employees()
+        self._fetch(
+            self.view.selected_status(), self.view.selected_type(), self.view.selected_employee(), 0,
+            force_balance=True,
+        )
 
     def _load_types(self) -> None:
         """Fetch the server's leave types once; a failure leaves just 'All types'."""
@@ -39,29 +47,53 @@ class LeaveListPresenter(QObject):
         worker.signals.error_occurred.connect(lambda msg: logger.warning("Leave types unavailable: %s", msg))
         QThreadPool.globalInstance().start(worker)
 
-    def _load_balances(self) -> None:
-        """Fetch leave balances on every open; a failure just leaves the strip as it was."""
-        worker = CallWorker(self.service.get_leave_balance)
-        worker.signals.result_ready.connect(self.view.display_balances)
+    def _load_employees(self) -> None:
+        """Fetch the people you may see once; a failure leaves just Me / Everyone."""
+        if self.employee_service is None:
+            return
+        worker = CallWorker(lambda: self.employee_service.get_employees(include_self=False))
+        worker.signals.result_ready.connect(self._on_employees)
+        worker.signals.error_occurred.connect(lambda msg: logger.warning("Employees unavailable: %s", msg))
+        QThreadPool.globalInstance().start(worker)
+
+    def _on_employees(self, people: list) -> None:
+        self._employees_loaded = True
+        self.view.set_employees(people)
+
+    def _load_balances(self, employee: str) -> None:
+        """Fetch one person's balances. "Everyone" has no single balance, so the strip is cleared."""
+        self._balance_employee = employee
+        if employee == "*":
+            self.view.display_balances([])
+            return
+        worker = CallWorker(lambda: self.service.get_leave_balance(employee=employee or None))
+        worker.signals.result_ready.connect(lambda rows: self._on_balances(employee, rows))
         worker.signals.error_occurred.connect(lambda msg: logger.warning("Leave balance unavailable: %s", msg))
         QThreadPool.globalInstance().start(worker)
+
+    def _on_balances(self, employee: str, rows: list) -> None:
+        if employee == self._balance_employee:  # ignore a slow reply for a person no longer selected
+            self.view.display_balances(rows)
 
     def _on_types(self, types: list) -> None:
         self._types_loaded = True
         self.view.set_leave_types(types)
 
-    def _on_fetch_requested(self, status: str, leave_type: str, page: int) -> None:
-        self._fetch(status, leave_type, page)
+    def _on_fetch_requested(self, status: str, leave_type: str, employee: str, page: int) -> None:
+        self._fetch(status, leave_type, employee, page)
 
-    def _fetch(self, status: str, leave_type: str, page: int) -> None:
-        self._status, self._leave_type, self._page = status, leave_type, page
+    def _fetch(self, status: str, leave_type: str, employee: str, page: int, force_balance: bool = False) -> None:
+        self._status, self._leave_type, self._employee, self._page = status, leave_type, employee, page
+        if force_balance or employee != self._balance_employee:
+            self._load_balances(employee)
         self._request_id += 1
         request_id = self._request_id
         start, size = page * self.page_size, self.page_size
 
         worker = CallWorker(lambda: self.service.get_leave_applications(
             start=start, page_length=size, status=status or None,
-            leave_type=leave_type or None))
+            leave_type=leave_type or None, employee=None if employee in ("", "*") else employee,
+            all_employees=employee == "*"))
         worker.signals.result_ready.connect(lambda rows: self._on_result(request_id, page, rows))
         worker.signals.error_occurred.connect(lambda msg: self._on_error(request_id, msg))
         self.view.set_loading(True)
