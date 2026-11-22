@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (
 from src.ui.views.activity_list_view import ActivityListView
 from src.ui.views.dashboard_view import DashboardView
 from src.ui.views.home_view import HomeView
+from src.ui.views.leave_list_view import LeaveListView
 from src.ui.views.settings_view import SettingsView
 from src.ui.views.sidebar_view import SidebarView
 from src.ui.views.timesheet_module_view import TimesheetModuleView
@@ -33,12 +34,14 @@ class MainContainer(QWidget):
         self.settings_view = SettingsView()
         self.activity_view = ActivityListView()
         self.timesheet_view = TimesheetModuleView()
+        self.leave_view = LeaveListView()
 
         self.stack.addWidget(self.dash_view)       # Index 0
         self.stack.addWidget(self.home_view)       # Index 1
         self.stack.addWidget(self.settings_view)   # Index 2
         self.stack.addWidget(self.activity_view)   # Index 3
         self.stack.addWidget(self.timesheet_view)  # Index 4
+        self.stack.addWidget(self.leave_view)      # Index 5
 
     def switch_to_home(self):
         self.stack.setCurrentIndex(0)
@@ -59,3 +62,7 @@ class MainContainer(QWidget):
     def switch_to_timesheets(self):
         self.stack.setCurrentIndex(4)
         self.sidebar.set_active("timesheets")
+
+    def switch_to_leave(self):
+        self.stack.setCurrentIndex(5)
+        self.sidebar.set_active("leave")

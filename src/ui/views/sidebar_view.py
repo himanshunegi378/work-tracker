@@ -10,6 +10,7 @@ NAV_ITEMS = [
     ("projects", "PROJECTS", "projects"),
     ("activities", "ACTIVITIES", "activities"),
     ("timesheets", "TIMESHEETS", "timesheets"),
+    ("leave", "LEAVE", "leave"),
     ("settings", "SETTINGS", "settings"),
 ]
 

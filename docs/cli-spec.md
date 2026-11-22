@@ -37,6 +37,8 @@ Shared by every `list`: `-n/--limit` (default 20 per page; with `--all`, the mos
 | `samta-tracker projects list` | `-s`, `--status open\|completed\|cancelled`, `--priority high\|medium\|low`, `--active/--inactive`, `-n`, `--page`, `--all` |
 | `samta-tracker projects view ID` | ID or exact project name |
 | `samta-tracker activities list` | `-s`, `-n`, `--page`, `--all` |
+| `samta-tracker leave list` | `--status open\|approved\|rejected\|cancelled`, `--type TEXT`, `--from DATE` (leaves ending on/after), `--to DATE` (leaves starting on/before), `--employee ID`, `-n`, `--page`, `--all` |
+| `samta-tracker leave balance` | `--date DATE` (balance as of; default today), `--employee ID`. Per leave type: allocated, taken, pending approval, remaining |
 | `samta-tracker timesheets list` | `--status draft\|submitted\|billed\|payslip\|completed\|cancelled`, `--workflow-state TEXT`, `--from DATE`, `--to DATE`, `--employee ID`, `-n`, `--page`, `--all` |
 | `samta-tracker timesheets view NAME` | `--no-logs` (time logs are shown by default) |
 | `samta-tracker timesheets today` | `--date DATE`, `--no-logs` |

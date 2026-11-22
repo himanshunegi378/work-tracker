@@ -29,6 +29,7 @@ GUI_MODULES = {
     "projects": ["projects list", "projects view"],
     "activities": ["activities list"],
     "timesheets": ["timesheets list", "timesheets view", "timesheets today"],
+    "leave": ["leave list", "leave balance"],
     "settings": ["login", "logout", "auth status", "config get", "config set"],
 }
 

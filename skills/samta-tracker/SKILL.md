@@ -1,6 +1,6 @@
 ---
 name: samta-tracker
-description: Control the Work Tracker (Samta/ERPNext timesheets) from the terminal with the `samta-tracker` CLI. Use when the user wants to log time, see or fix today's entries, list projects/activities/timesheets, submit or delete a timesheet, or start/stop the desktop app's time-log reminder.
+description: Control the Work Tracker (Samta/ERPNext timesheets) from the terminal with the `samta-tracker` CLI. Use when the user wants to log time, see or fix today's entries, list projects/activities/timesheets, check their leave applications or remaining leave balance, submit or delete a timesheet, or start/stop the desktop app's time-log reminder.
 ---
 
 # samta-tracker
@@ -130,6 +130,8 @@ Global flags (before the command): `--json`, `--no-color`, `-q/--quiet` (ids onl
 | `projects list [-s TEXT] [--status open\|completed\|cancelled] [--priority high\|medium\|low] [--active\|--inactive] [-n N] [--page P] [--all]` | find the project id/name for logging |
 | `projects view ID` | one project |
 | `activities list [-s TEXT] [-n N] [--all]` | valid activity types |
+| `leave list [--status open\|approved\|rejected\|cancelled] [--type NAME] [--from DATE] [--to DATE] [-n N] [--all]` | your leave applications, newest first. `--type` is the exact leave type name (e.g. `"Sick Leave"`, `"Privilege Leave"`; types are set per company). `--from`/`--to` match any leave overlapping the range. Read-only: applying for leave is not supported. |
+| `leave balance [--date DATE]` | leaves allocated / taken / pending / remaining per leave type (only types with an allocation; Leave Without Pay has none) |
 | `timesheets list [--status draft\|submitted\|...] [--workflow-state STATE] [--from DATE] [--to DATE] [-n N] [--all]` | newest first |
 | `timesheets view NAME` / `timesheets today` | a timesheet with its entries |
 | `log list [--date DATE] [--timesheet NAME]` | entries with a `#` column used by edit/rm |
@@ -176,6 +178,10 @@ Needs a graphical session (exit 4 otherwise). `start` pops the Smart Log prompt 
 **"What did I do today?"** → `--json log list` and summarise (hours per project).
 
 **"Fix my last entry"** → `--json log list`, `log edit last -d "..." --dry-run`, show diff, apply.
+
+**"How many leaves do I have left?"** → `--json leave balance` and report `remaining_leaves` per type (mention any `leaves_pending_approval`).
+
+**"How many leaves did I take this year?"** → `--json leave list --status approved --from 2026-01-01 --to 2026-12-31 --all`, then sum `total_leave_days` (group by `leave_type` if asked). Note a leave spanning the range edge counts in full.
 
 **"Submit my timesheet"** → `timesheets today`, `timesheets submit NAME --dry-run`, show the user the total and wait for explicit confirmation, then `-y`.
 

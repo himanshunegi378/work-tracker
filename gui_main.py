@@ -12,6 +12,7 @@ from src.core.app import build_app
 from src.core.logging_setup import configure_logging
 from src.runtime_paths import ensure_runtime_dirs, user_data_dir
 from src.services.activity_service import ActivityService
+from src.services.leave_service import LeaveService
 from src.services.auth_service import AuthService
 from src.services.project_service import ProjectService
 from src.services.timesheet_service import TimesheetService
@@ -21,6 +22,7 @@ from src.ui.single_instance import SingleInstance
 from src.ui.tracker_controller import TrackerController
 from src.ui.tray import TrayController
 from src.ui.activity_list_presenter import ActivityListPresenter
+from src.ui.leave_list_presenter import LeaveListPresenter
 from src.ui.home_presenter import HomePresenter
 from src.ui.settings_presenter import SettingsPresenter
 from src.ui.timesheet_module_presenter import TimesheetModulePresenter
@@ -40,6 +42,7 @@ class MainWindow(QMainWindow):
         project_service: ProjectService,
         activity_service: ActivityService,
         timesheet_service: TimesheetService,
+        leave_service: LeaveService,
     ):
         super().__init__()
         self.setWindowTitle("Senior Architect Work Tracker")
@@ -48,6 +51,7 @@ class MainWindow(QMainWindow):
         self.project_service = project_service
         self.activity_service = activity_service
         self.timesheet_service = timesheet_service
+        self.leave_service = leave_service
         self._smart_log_fetch_in_flight = False
         self._smart_log_save_in_flight = False
         self._quitting = False
@@ -69,6 +73,7 @@ class MainWindow(QMainWindow):
         self.home_presenter     = HomePresenter(self.container.home_view, project_service)
         self.settings_presenter = SettingsPresenter(self.container.settings_view, self.auth)
         self.activity_presenter = ActivityListPresenter(self.container.activity_view, activity_service)
+        self.leave_presenter = LeaveListPresenter(self.container.leave_view, leave_service)
         self.timesheet_presenter = TimesheetModulePresenter(
             self.container.timesheet_view,
             timesheet_service,
@@ -95,6 +100,9 @@ class MainWindow(QMainWindow):
         elif module_id == "timesheets":
             self.container.switch_to_timesheets()
             self.timesheet_presenter.refresh()
+        elif module_id == "leave":
+            self.container.switch_to_leave()
+            self.leave_presenter.refresh()
         elif module_id == "settings":
             self.container.switch_to_settings()
 
@@ -337,6 +345,7 @@ def main(argv=None):
         ctx.projects,
         ctx.activities,
         ctx.timesheets,
+        ctx.leave,
     )
     window.started_hidden = args.hidden
     has_tray = window.setup_tray()

@@ -41,7 +41,8 @@ def collect(fetch: Fetch, limit: Optional[int], page: int, all_pages: bool) -> P
     return PageResult(rows, 1, cap, more=more, fetched_all=True)
 
 
-_SINGULAR = {"projects": "project", "activities": "activity", "timesheets": "timesheet"}
+_SINGULAR = {"projects": "project", "activities": "activity", "timesheets": "timesheet",
+             "leave applications": "leave application"}
 
 
 def footer(result: PageResult, noun: str) -> str:

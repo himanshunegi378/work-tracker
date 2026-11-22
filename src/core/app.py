@@ -14,6 +14,7 @@ from src.persistence.credential_storage import CredentialStorage
 from src.persistence.session_store import SessionStore
 from src.services.activity_service import ActivityService
 from src.services.auth_service import AuthService
+from src.services.leave_service import LeaveService
 from src.services.project_service import ProjectService
 from src.services.timesheet_service import TimesheetService
 
@@ -27,6 +28,7 @@ class AppContext:
     projects: ProjectService
     activities: ActivityService
     timesheets: TimesheetService
+    leave: LeaveService
 
 
 def build_app(base_url: Optional[str] = None) -> AppContext:
@@ -44,4 +46,5 @@ def build_app(base_url: Optional[str] = None) -> AppContext:
         projects=ProjectService(api_client),
         activities=ActivityService(api_client),
         timesheets=TimesheetService(api_client, auth),
+        leave=LeaveService(api_client, auth),
     )

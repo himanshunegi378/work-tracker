@@ -4,7 +4,7 @@ A desktop app and a command line for logging time against a Frappe/ERPNext serve
 (default `https://matrix.samta.ai`). The two are **one application**: same login, same
 data, same settings. Use whichever fits the moment, or let an AI agent drive the CLI.
 
-- **Desktop app** (PySide6): dashboard, projects, activities, timesheets, a Smart Log prompt
+- **Desktop app** (PySide6): dashboard, projects, activities, timesheets, leave, a Smart Log prompt
   that reminds you to record time, light and dark themes, and a tray icon.
 - **`samta-tracker` CLI**: everything the app does, scriptable. Also starts, stops and
   opens the desktop app.
@@ -64,7 +64,7 @@ app, so logging in once covers both. Passwords are never written to disk by this
 | Area | Commands |
 |---|---|
 | Account | `login`, `logout`, `auth status` |
-| Read | `projects list\|view`, `activities list`, `timesheets list\|view\|today`, `log list` |
+| Read | `projects list\|view`, `activities list`, `leave list|balance`, `timesheets list\|view\|today`, `log list` |
 | Record and change time | `log add`, `log edit`, `log rm` |
 | Timesheets | `timesheets submit`, `timesheets rm` |
 | Desktop app | `start`, `stop`, `status`, `gui`, `remind` |
