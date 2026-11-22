@@ -156,6 +156,7 @@ def ts_page(monkeypatch):
         def globalInstance():
             return SimpleNamespace(start=lambda worker: worker.run())
 
+    monkeypatch.setattr("src.ui.workers.call_worker.QThreadPool", Inline)
     monkeypatch.setattr(mod, "QThreadPool", Inline)
     service = MagicMock()
     service.get_timesheets.return_value = [

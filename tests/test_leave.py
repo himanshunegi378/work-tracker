@@ -195,7 +195,7 @@ def leave_page(monkeypatch):
         def globalInstance():
             return SimpleNamespace(start=lambda worker: worker.run())
 
-    monkeypatch.setattr(mod, "QThreadPool", Inline)
+    monkeypatch.setattr("src.ui.workers.call_worker.QThreadPool", Inline)
     service = MagicMock()
     service.get_leave_applications.return_value = []
     service.get_leave_balance.return_value = [{"leave_type": "Sick Leave", "total_leaves": 6.0,

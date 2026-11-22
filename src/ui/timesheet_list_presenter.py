@@ -9,7 +9,7 @@ from PySide6.QtCore import QObject, Slot, QThreadPool
 
 from src.services.timesheet_service import TimesheetService
 from src.ui.views.timesheet_list_view import TimesheetListView
-from src.ui.workers.call_worker import CallWorker
+from src.ui.workers.call_worker import run_in_background
 from src.ui.workers.timesheet_fetch_worker import TimesheetFetchWorker
 
 logger = logging.getLogger(__name__)
@@ -47,10 +47,10 @@ class TimesheetListPresenter(QObject):
         """Fetch the people you may see once; a failure leaves just Me / Everyone."""
         if self.employee_service is None:
             return
-        worker = CallWorker(lambda: self.employee_service.get_employees(include_self=False))
-        worker.signals.result_ready.connect(self._on_employees)
-        worker.signals.error_occurred.connect(lambda msg: logger.warning("Employees unavailable: %s", msg))
-        QThreadPool.globalInstance().start(worker)
+        run_in_background(
+            lambda: self.employee_service.get_employees(include_self=False), self._on_employees,
+            lambda msg: logger.warning("Employees unavailable: %s", msg), self,
+        )
 
     def _on_employees(self, people: list) -> None:
         self._employees_loaded = True

@@ -3,11 +3,11 @@
 import logging
 from typing import Optional
 
-from PySide6.QtCore import QObject, QThreadPool
+from PySide6.QtCore import QObject
 
 from src.services.leave_service import LeaveService
 from src.ui.views.leave_list_view import LeaveListView
-from src.ui.workers.call_worker import CallWorker
+from src.ui.workers.call_worker import run_in_background
 
 logger = logging.getLogger(__name__)
 
@@ -42,19 +42,19 @@ class LeaveListPresenter(QObject):
 
     def _load_types(self) -> None:
         """Fetch the server's leave types once; a failure leaves just 'All types'."""
-        worker = CallWorker(self.service.get_leave_types)
-        worker.signals.result_ready.connect(self._on_types)
-        worker.signals.error_occurred.connect(lambda msg: logger.warning("Leave types unavailable: %s", msg))
-        QThreadPool.globalInstance().start(worker)
+        run_in_background(
+            self.service.get_leave_types, self._on_types,
+            lambda msg: logger.warning("Leave types unavailable: %s", msg), self,
+        )
 
     def _load_employees(self) -> None:
         """Fetch the people you may see once; a failure leaves just Me / Everyone."""
         if self.employee_service is None:
             return
-        worker = CallWorker(lambda: self.employee_service.get_employees(include_self=False))
-        worker.signals.result_ready.connect(self._on_employees)
-        worker.signals.error_occurred.connect(lambda msg: logger.warning("Employees unavailable: %s", msg))
-        QThreadPool.globalInstance().start(worker)
+        run_in_background(
+            lambda: self.employee_service.get_employees(include_self=False), self._on_employees,
+            lambda msg: logger.warning("Employees unavailable: %s", msg), self,
+        )
 
     def _on_employees(self, people: list) -> None:
         self._employees_loaded = True
@@ -66,10 +66,11 @@ class LeaveListPresenter(QObject):
         if employee == "*":
             self.view.display_balances([])
             return
-        worker = CallWorker(lambda: self.service.get_leave_balance(employee=employee or None))
-        worker.signals.result_ready.connect(lambda rows: self._on_balances(employee, rows))
-        worker.signals.error_occurred.connect(lambda msg: logger.warning("Leave balance unavailable: %s", msg))
-        QThreadPool.globalInstance().start(worker)
+        run_in_background(
+            lambda: self.service.get_leave_balance(employee=employee or None),
+            lambda rows: self._on_balances(employee, rows),
+            lambda msg: logger.warning("Leave balance unavailable: %s", msg), self,
+        )
 
     def _on_balances(self, employee: str, rows: list) -> None:
         if employee == self._balance_employee:  # ignore a slow reply for a person no longer selected
@@ -90,14 +91,15 @@ class LeaveListPresenter(QObject):
         request_id = self._request_id
         start, size = page * self.page_size, self.page_size
 
-        worker = CallWorker(lambda: self.service.get_leave_applications(
-            start=start, page_length=size, status=status or None,
-            leave_type=leave_type or None, employee=None if employee in ("", "*") else employee,
-            all_employees=employee == "*"))
-        worker.signals.result_ready.connect(lambda rows: self._on_result(request_id, page, rows))
-        worker.signals.error_occurred.connect(lambda msg: self._on_error(request_id, msg))
         self.view.set_loading(True)
-        QThreadPool.globalInstance().start(worker)
+        run_in_background(
+            lambda: self.service.get_leave_applications(
+                start=start, page_length=size, status=status or None,
+                leave_type=leave_type or None, employee=None if employee in ("", "*") else employee,
+                all_employees=employee == "*"),
+            lambda rows: self._on_result(request_id, page, rows),
+            lambda msg: self._on_error(request_id, msg), self,
+        )
 
     def _on_result(self, request_id: int, page: int, rows: list) -> None:
         if request_id != self._request_id:
